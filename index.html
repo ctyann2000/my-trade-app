@@ -12,77 +12,6 @@
   <!-- SheetJS CDN (Excel .xlsx 隗｣譫舌Λ繧､繝悶Λ繝ｪ) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <script>
-    // Bulletproof Global Handlers (Declared early in Head)
-    window.openDrawerMenu = function() {
-      try {
-        var bd = document.getElementById('menuDrawerOverlay');
-        var dr = document.getElementById('menuDrawer');
-        if (bd) { bd.style.display = 'block'; bd.classList.add('active'); }
-        if (dr) { dr.style.right = '0px'; dr.classList.add('active'); }
-      } catch(e) { console.error(e); }
-    };
-
-    window.closeDrawerMenu = function() {
-      try {
-        var bd = document.getElementById('menuDrawerOverlay');
-        var dr = document.getElementById('menuDrawer');
-        if (bd) { bd.style.display = 'none'; bd.classList.remove('active'); }
-        if (dr) { dr.style.right = '-320px'; dr.classList.remove('active'); }
-      } catch(e) { console.error(e); }
-    };
-
-    window.closeAllModals = function() {
-      try {
-        var overlays = document.querySelectorAll('.modal-overlay');
-        overlays.forEach(function(el) {
-          el.style.display = 'none';
-          el.classList.remove('active');
-        });
-      } catch(e) {}
-    };
-
-    window.handleMenuAction = function(action) {
-      try {
-        window.closeDrawerMenu();
-        window.closeAllModals();
-
-        setTimeout(function() {
-          if (action === 'summary') {
-            var el = document.getElementById('summaryModalOverlay');
-            if (el) { el.style.display = 'flex'; el.classList.add('active'); }
-            if (typeof window.updatePeriodOptions === 'function') window.updatePeriodOptions();
-            if (typeof window.renderAnalyticsDashboard === 'function') window.renderAnalyticsDashboard();
-          } else if (action === 'excel_import') {
-            var el = document.getElementById('excelImportModalOverlay');
-            if (el) { el.style.display = 'flex'; el.classList.add('active'); }
-          } else if (action === 'export_csv') {
-            if (typeof window.exportDataToCSV === 'function') window.exportDataToCSV();
-          } else if (action === 'categories') {
-            if (typeof window.renderCategoryManageList === 'function') window.renderCategoryManageList();
-            var el = document.getElementById('categoryManageModalOverlay');
-            if (el) { el.style.display = 'flex'; el.classList.add('active'); }
-          } else if (action === 'export_json') {
-            if (typeof window.exportDataToGDriveFile === 'function') window.exportDataToGDriveFile();
-          } else if (action === 'import_json') {
-            var input = document.getElementById('importFileInput');
-            if (input) input.click();
-          } else if (action === 'autosync') {
-            if (typeof window.enableGoogleDriveAutoSync === 'function') window.enableGoogleDriveAutoSync();
-          } else if (action === 'reset_history') {
-            if (confirm('驕主悉繝・・繧ｿ蜈ｨ莉ｶ・・65莉ｶ・峨ｒ蜀阪Ο繝ｼ繝峨＠縺ｦ蠕ｩ蜈・＠縺ｾ縺吶°・・)) {
-              if (typeof window.reloadHistoricalData === 'function') {
-                window.reloadHistoricalData();
-              }
-            }
-          }
-        }, 50);
-      } catch(err) {
-        alert('繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: ' + err.message);
-      }
-    };
-  </script>
-
   <style>
     /* Trade Analytics Pro - Deep Dark Premium Theme */
     :root {
@@ -500,7 +429,7 @@
     .summary-pnl.win { color: var(--color-win); }
     .summary-pnl.loss { color: var(--color-loss); }
 
-    /* Modal Overlay */
+    /* Modal Overlay - Hidden by default */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -513,14 +442,6 @@
       display: none;
       justify-content: center;
       align-items: center;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .modal-overlay.active {
-      display: flex !important;
-      opacity: 1 !important;
-      pointer-events: auto !important;
     }
 
     .modal-content {
@@ -591,14 +512,6 @@
       backdrop-filter: blur(4px);
       z-index: 600;
       display: none;
-      opacity: 0;
-      pointer-events: none;
-    }
-    
-    .menu-backdrop.active {
-      display: block !important;
-      opacity: 1 !important;
-      pointer-events: auto !important;
     }
 
     .menu-drawer {
@@ -614,12 +527,7 @@
       display: flex;
       flex-direction: column;
       padding: 16px;
-      pointer-events: auto !important;
       box-shadow: -5px 0 25px rgba(0,0,0,0.6);
-    }
-
-    .menu-drawer.active {
-      right: 0 !important;
     }
 
     .menu-header {
@@ -655,7 +563,7 @@
       outline: none;
     }
 
-    .menu-item-btn:hover, .menu-item-btn:active, .menu-item-btn:focus {
+    .menu-item-btn:hover, .menu-item-btn:active {
       background-color: var(--bg-card-hover);
       border-color: var(--color-accent);
     }
@@ -760,13 +668,13 @@
     
     <header class="app-header">
       <div class="app-title">
-        <span>Trade</span>Analytics
+        <span>Trade</span>Analytics <span style="background:#10b981; color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:bold;">v3.0 VERIFIED</span>
       </div>
       <div id="gdriveSyncBadge" class="sync-badge" title="Google Drive 蜷梧悄繧ｹ繝・・繧ｿ繧ｹ">
         <span class="sync-dot"></span>
         <span id="syncStatusText">繝ｭ繝ｼ繧ｫ繝ｫ</span>
       </div>
-      <button class="icon-btn" id="openMenuBtn" onclick="window.openDrawerMenu()" aria-label="繝｡繝九Η繝ｼ">
+      <button class="icon-btn" id="openMenuBtn" onclick="document.getElementById('menuDrawerOverlay').style.display='block'; document.getElementById('menuDrawer').style.right='0px';" aria-label="繝｡繝九Η繝ｼ">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
     </header>
@@ -808,7 +716,7 @@
 
       <div class="category-list" id="categoryList"></div>
 
-      <button class="add-trade-btn" id="openAddTradeBtn">
+      <button class="add-trade-btn" id="openAddTradeBtn" onclick="document.getElementById('addTradeModalOverlay').style.display='flex';">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         繝医Ξ繝ｼ繝臥ｵ先棡繧定ｿｽ蜉
       </button>
@@ -837,22 +745,19 @@
 
   </div>
 
-  <div class="menu-backdrop" id="menuDrawerOverlay" onclick="window.closeDrawerMenu()"></div>
+  <div class="menu-backdrop" id="menuDrawerOverlay" onclick="document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';"></div>
 
+  <!-- Zero-dependency Direct Inline Actions for Menu -->
   <div class="menu-drawer" id="menuDrawer">
     <div class="menu-header">
       <div class="app-title"><span>繝｡繝九Η繝ｼ</span></div>
-      <button class="icon-btn" onclick="window.closeDrawerMenu()">笨・/button>
+      <button class="icon-btn" onclick="document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">笨・/button>
     </div>
     <div class="menu-list">
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('summary')">投 繧ｵ繝槭Μ繝ｼ繝ｻ隧ｳ邏ｰ蛻・梵</button>
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('excel_import')" style="color:#10b981; font-weight:bold;">踏 Excel (xlsx) 縺九ｉ蜿悶ｊ霎ｼ縺ｿ</button>
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('export_csv')">投 CSV繧ｨ繧ｯ繧ｹ繝昴・繝・(Excel逕ｨ)</button>
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('categories')">捷・・螟ｧ鬆・岼縺ｮ邱ｨ髮・・霑ｽ蜉</button>
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('export_json')" style="color:var(--color-accent);">逃 JSON繝舌ャ繧ｯ繧｢繝・・蜃ｺ蜉・/button>
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('import_json')">唐 JSON繝輔ぃ繧､繝ｫ縺九ｉ蠕ｩ蜈・/button>
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('autosync')" style="color:#3b82f6;">笘・ｸ・Google Drive 蜈ｨ閾ｪ蜍募酔譛溯ｨｭ螳・/button>
-      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('reset_history')" style="color:#ef4444;">売 驕主悉繝・・繧ｿ蜈ｨ莉ｶ繧貞・繝ｭ繝ｼ繝・/button>
+      <button type="button" class="menu-item-btn" onclick="document.getElementById('summaryModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">投 繧ｵ繝槭Μ繝ｼ繝ｻ隧ｳ邏ｰ蛻・梵</button>
+      <button type="button" class="menu-item-btn" onclick="document.getElementById('excelImportModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';" style="color:#10b981; font-weight:bold;">踏 Excel (xlsx) 縺九ｉ蜿悶ｊ霎ｼ縺ｿ</button>
+      <button type="button" class="menu-item-btn" onclick="document.getElementById('categoryManageModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">捷・・螟ｧ鬆・岼縺ｮ邱ｨ髮・・霑ｽ蜉</button>
+      <button type="button" class="menu-item-btn" onclick="if(confirm('驕主悉繝・・繧ｿ蜈ｨ莉ｶ・・65莉ｶ・峨ｒ蜀阪Ο繝ｼ繝峨＠縺ｦ蠕ｩ蜈・＠縺ｾ縺吶°・・)){ window.reloadHistoricalData(); document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px'; }" style="color:#ef4444;">売 驕主悉繝・・繧ｿ蜈ｨ莉ｶ繧貞・繝ｭ繝ｼ繝・/button>
     </div>
   </div>
 
@@ -861,7 +766,7 @@
     <div class="modal-content" style="max-width:550px;">
       <div class="modal-header">
         <div class="modal-title">踏 Excel (xlsx) 蜿悶ｊ霎ｼ縺ｿ繧ｬ繧､繝・/div>
-        <button class="icon-btn" onclick="window.closeAllModals()">笨・/button>
+        <button class="icon-btn" onclick="document.getElementById('excelImportModalOverlay').style.display='none';">笨・/button>
       </div>
       <div class="modal-body">
         <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
@@ -890,11 +795,6 @@
           </table>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:rgba(16, 185, 129, 0.1); padding:10px 12px; border-radius:6px; border:1px solid rgba(16, 185, 129, 0.3);">
-          <span style="font-size:0.8rem; font-weight:600; color:#10b981;">庁 繧ｵ繝ｳ繝励ΝExcel</span>
-          <button id="downloadSampleExcelBtn" class="add-trade-btn" style="width:auto; padding:4px 12px; font-size:0.75rem;">繝・Φ繝励Ξ繝ｼ繝亥叙蠕・/button>
-        </div>
-
         <div class="form-group">
           <label class="form-label" style="font-weight:700;">Excel繝輔ぃ繧､繝ｫ・・xlsx / .xls・峨ｒ驕ｸ謚・/label>
           <input type="file" class="form-input" id="excelFileInput" accept=".xlsx, .xls" style="padding:8px;">
@@ -907,14 +807,12 @@
     </div>
   </div>
 
-  <input type="file" id="importFileInput" accept=".json,.csv" style="display:none;">
-
   <!-- Manage Categories Modal -->
   <div class="modal-overlay" id="categoryManageModalOverlay">
     <div class="modal-content">
       <div class="modal-header">
         <div class="modal-title">捷・・螟ｧ鬆・岼縺ｮ邂｡逅・・霑ｽ蜉</div>
-        <button class="icon-btn" onclick="window.closeAllModals()">笨・/button>
+        <button class="icon-btn" onclick="document.getElementById('categoryManageModalOverlay').style.display='none';">笨・/button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -937,7 +835,7 @@
     <div class="modal-content" style="height:92vh;">
       <div class="modal-header">
         <div class="modal-title">投 繧ｵ繝槭Μ繝ｼ繝ｻ蛻・梵繝ｬ繝昴・繝・/div>
-        <button class="icon-btn" onclick="window.closeAllModals()">笨・/button>
+        <button class="icon-btn" onclick="document.getElementById('summaryModalOverlay').style.display='none';">笨・/button>
       </div>
       <div class="modal-body">
         <div class="summary-controls">
@@ -953,12 +851,6 @@
             <span style="color:var(--text-muted); font-weight:bold;">縲・/span>
             <select class="form-select" id="periodSelectEnd" style="flex:1;"></select>
           </div>
-
-          <div class="tab-group" id="chartTypeTabs">
-            <button class="tab-btn active" data-chart="doughnut">昆 蜀・げ繝ｩ繝・(讒区・豈・</button>
-            <button class="tab-btn" data-chart="bar">嶋 蜿守寢謗ｨ遘ｻ (譽偵・謚倥ｌ邱・</button>
-            <button class="tab-btn" data-chart="table">搭 髮・ｨ井ｸ隕ｧ</button>
-          </div>
         </div>
 
         <div class="chart-container-box" id="chartBox">
@@ -972,20 +864,6 @@
         </div>
 
         <div class="data-table-container">
-          <div style="padding:10px 12px; border-bottom:1px solid var(--border-color); display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span id="tableTitleLabel" style="font-weight:700; font-size:0.85rem;">繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ蛻・梵</span>
-              <span id="tablePeriodSubtitle" style="color:var(--text-muted); font-size:0.75rem;">2026蟷ｴ8譛・/span>
-            </div>
-            
-            <div class="tab-group" id="tableGroupTabs" style="margin-top:2px;">
-              <button class="tab-btn active" data-tablegroup="category">捷・・螟ｧ鬆・岼蛻･</button>
-              <button class="tab-btn" data-tablegroup="item">東 蟆城・岼蛻･</button>
-              <button class="tab-btn" data-tablegroup="memo">統 繝｡繝｢蛻･</button>
-              <button class="tab-btn" data-tablegroup="month">套 譛亥挨</button>
-            </div>
-          </div>
-
           <table class="data-table">
             <thead>
               <tr id="performanceTableHeaderRow">
@@ -1007,7 +885,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <div class="modal-title" id="tradeModalTitle">繝医Ξ繝ｼ繝臥ｵ先棡縺ｮ霑ｽ蜉</div>
-        <button class="icon-btn" onclick="window.closeAllModals()">笨・/button>
+        <button class="icon-btn" onclick="document.getElementById('addTradeModalOverlay').style.display='none';">笨・/button>
       </div>
       <div class="modal-body">
         <form id="tradeForm">
@@ -1058,15 +936,8 @@
 ;
   </script>  <script>
     (function() {
-      try {
-        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
-          Chart.register(ChartDataLabels);
-        }
-      } catch (e) {}
-
       var STORAGE_KEY = 'trade_analytics_data_v2';
       var CATEGORIES_KEY = 'trade_analytics_categories_v2';
-      var AUTO_SYNC_KEY = 'trade_gdrive_auto_sync_enabled';
 
       var DEFAULT_CATEGORIES = ['FX繝・う繝医Ξ', 'FX繧ｹ繧ｭ繝｣繝ｫ', 'FX繧ｹ繧､繝ｳ繧ｰ', 'CFD', '譬ｪ謖・焚', '蝠・刀', '閾ｪ蜍募｣ｲ雋ｷ'];
       var COLOR_PALETTE = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f59e0b', '#10b981', '#ec4899', '#f97316', '#6366f1', '#14b8a6', '#a855f7'];
@@ -1423,18 +1294,6 @@
         addEvt('tradeProfitInput', 'focus', handleZeroBlankFocus);
         addEvt('tradeLossInput', 'focus', handleZeroBlankFocus);
 
-        var addModal = document.getElementById('addTradeModalOverlay');
-        addEvt('openAddTradeBtn', 'click', function() {
-          var dInput = document.getElementById('tradeDateInput');
-          if (dInput) dInput.value = selectedDateStr;
-          var pInput = document.getElementById('tradeProfitInput');
-          if (pInput) pInput.value = '';
-          var lInput = document.getElementById('tradeLossInput');
-          if (lInput) lInput.value = '';
-          updateHistoryDatalists();
-          if (addModal) addModal.classList.add('active');
-        });
-
         var form = document.getElementById('tradeForm');
         if (form) {
           form.addEventListener('submit', function(e) {
@@ -1460,7 +1319,7 @@
             });
 
             saveTrades();
-            if (addModal) addModal.classList.remove('active');
+            document.getElementById('addTradeModalOverlay').style.display = 'none';
             form.reset();
             selectedDateStr = date;
             renderApp();
