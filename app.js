@@ -60,14 +60,24 @@ function getTradeProfitLoss(t) {
   return { profit, loss, netPnl: profit - loss };
 }
 
-// Initialize App
-document.addEventListener('DOMContentLoaded', () => {
-  loadCategories();
-  loadTrades();
-  checkAutoSyncState();
-  setupEventListeners();
-  renderApp();
-});
+// Guaranteed App Initializer
+function initApp() {
+  try {
+    loadCategories();
+    loadTrades();
+    checkAutoSyncState();
+    setupEventListeners();
+    renderApp();
+  } catch (e) {
+    console.error("App Initialization error:", e);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // Load & Save Master Categories
 function loadCategories() {
@@ -143,6 +153,7 @@ function checkAutoSyncState() {
 function updateSyncBadge(status, text) {
   const badge = document.getElementById('gdriveSyncBadge');
   const textEl = document.getElementById('syncStatusText');
+  if (!badge) return;
   badge.className = 'sync-badge';
   
   if (status === 'active') badge.classList.add('active');
@@ -194,9 +205,11 @@ function renderCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   
-  document.getElementById('calendarMonthLabel').textContent = `${year}年 ${month + 1}月`;
+  const monthLabel = document.getElementById('calendarMonthLabel');
+  if (monthLabel) monthLabel.textContent = `${year}年 ${month + 1}月`;
   
   const daysGrid = document.getElementById('daysGrid');
+  if (!daysGrid) return;
   daysGrid.innerHTML = '';
   
   const firstDay = new Date(year, month, 1).getDay();
@@ -274,10 +287,12 @@ function renderSelectedDayDetails() {
   const dateObj = new Date(y, m - 1, d);
   const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
   
-  document.getElementById('selectedDateTitle').textContent = `${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')} (${dayNames[dateObj.getDay()]}) の損益明細`;
+  const titleEl = document.getElementById('selectedDateTitle');
+  if (titleEl) titleEl.textContent = `${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')} (${dayNames[dateObj.getDay()]}) の損益明細`;
 
   const dayTrades = trades.filter(t => t.date === selectedDateStr);
   const categoryListEl = document.getElementById('categoryList');
+  if (!categoryListEl) return;
   categoryListEl.innerHTML = '';
 
   let dayTotalPnl = 0;
@@ -289,8 +304,10 @@ function renderSelectedDayDetails() {
       </div>
     `;
     const pill = document.getElementById('dayPnlPill');
-    pill.textContent = '¥0';
-    pill.className = 'pill';
+    if (pill) {
+      pill.textContent = '¥0';
+      pill.className = 'pill';
+    }
     return;
   }
 
@@ -305,8 +322,10 @@ function renderSelectedDayDetails() {
   });
 
   const pill = document.getElementById('dayPnlPill');
-  pill.textContent = formatJPY(dayTotalPnl);
-  pill.className = `pill ${dayTotalPnl >= 0 ? 'win' : 'loss'}`;
+  if (pill) {
+    pill.textContent = formatJPY(dayTotalPnl);
+    pill.className = `pill ${dayTotalPnl >= 0 ? 'win' : 'loss'}`;
+  }
 
   Object.keys(catGroups).forEach(catName => {
     const group = catGroups[catName];
@@ -397,23 +416,35 @@ function renderFixedFooterSummary() {
   const yPnl = yProfit - yLoss;
   const lPnl = lProfit - lLoss;
 
-  document.getElementById('footerMonthProfit').textContent = `¥${mProfit.toLocaleString()}`;
-  document.getElementById('footerMonthLoss').textContent = `¥${mLoss.toLocaleString()}`;
+  const mProfEl = document.getElementById('footerMonthProfit');
+  if (mProfEl) mProfEl.textContent = `¥${mProfit.toLocaleString()}`;
+  const mLossEl = document.getElementById('footerMonthLoss');
+  if (mLossEl) mLossEl.textContent = `¥${mLoss.toLocaleString()}`;
   const mPnlEl = document.getElementById('footerMonthPnl');
-  mPnlEl.textContent = formatJPY(mPnl);
-  mPnlEl.className = `summary-pnl ${mPnl >= 0 ? 'win' : 'loss'}`;
+  if (mPnlEl) {
+    mPnlEl.textContent = formatJPY(mPnl);
+    mPnlEl.className = `summary-pnl ${mPnl >= 0 ? 'win' : 'loss'}`;
+  }
 
-  document.getElementById('footerYearProfit').textContent = `¥${yProfit.toLocaleString()}`;
-  document.getElementById('footerYearLoss').textContent = `¥${yLoss.toLocaleString()}`;
+  const yProfEl = document.getElementById('footerYearProfit');
+  if (yProfEl) yProfEl.textContent = `¥${yProfit.toLocaleString()}`;
+  const yLossEl = document.getElementById('footerYearLoss');
+  if (yLossEl) yLossEl.textContent = `¥${yLoss.toLocaleString()}`;
   const yPnlEl = document.getElementById('footerYearPnl');
-  yPnlEl.textContent = formatJPY(yPnl);
-  yPnlEl.className = `summary-pnl ${yPnl >= 0 ? 'win' : 'loss'}`;
+  if (yPnlEl) {
+    yPnlEl.textContent = formatJPY(yPnl);
+    yPnlEl.className = `summary-pnl ${yPnl >= 0 ? 'win' : 'loss'}`;
+  }
 
-  document.getElementById('footerLifeProfit').textContent = `¥${lProfit.toLocaleString()}`;
-  document.getElementById('footerLifeLoss').textContent = `¥${lLoss.toLocaleString()}`;
+  const lProfEl = document.getElementById('footerLifeProfit');
+  if (lProfEl) lProfEl.textContent = `¥${lProfit.toLocaleString()}`;
+  const lLossEl = document.getElementById('footerLifeLoss');
+  if (lLossEl) lLossEl.textContent = `¥${lLoss.toLocaleString()}`;
   const lPnlEl = document.getElementById('footerLifePnl');
-  lPnlEl.textContent = formatJPY(lPnl);
-  lPnlEl.className = `summary-pnl ${lPnl >= 0 ? 'win' : 'loss'}`;
+  if (lPnlEl) {
+    lPnlEl.textContent = formatJPY(lPnl);
+    lPnlEl.className = `summary-pnl ${lPnl >= 0 ? 'win' : 'loss'}`;
+  }
 }
 
 /* =========================================================
@@ -421,6 +452,7 @@ function renderFixedFooterSummary() {
    ========================================================= */
 function renderCategoryManageList() {
   const listEl = document.getElementById('categoryManageList');
+  if (!listEl) return;
   listEl.innerHTML = '';
 
   categories.forEach((cat, index) => {
@@ -459,19 +491,23 @@ let activePeriodType = 'month';
 let activeChartType = 'doughnut';
 
 function openSummaryModal() {
-  document.getElementById('summaryModalOverlay').classList.add('active');
+  const overlay = document.getElementById('summaryModalOverlay');
+  if (overlay) overlay.classList.add('active');
   updatePeriodOptions();
   renderAnalyticsDashboard();
 }
 
 function closeSummaryModal() {
-  document.getElementById('summaryModalOverlay').classList.remove('active');
+  const overlay = document.getElementById('summaryModalOverlay');
+  if (overlay) overlay.classList.remove('active');
 }
 
 function updatePeriodOptions() {
   const container = document.getElementById('periodSelectContainer');
   const startSelect = document.getElementById('periodSelectStart');
   const endSelect = document.getElementById('periodSelectEnd');
+
+  if (!startSelect || !endSelect) return;
 
   startSelect.innerHTML = '';
   endSelect.innerHTML = '';
@@ -489,9 +525,9 @@ function updatePeriodOptions() {
   const days = datasetDays.sort();
 
   if (activePeriodType === 'all') {
-    container.style.display = 'none';
+    if (container) container.style.display = 'none';
   } else {
-    container.style.display = 'flex';
+    if (container) container.style.display = 'flex';
 
     if (activePeriodType === 'year') {
       years.forEach(y => {
@@ -522,8 +558,10 @@ function updatePeriodOptions() {
 }
 
 function renderAnalyticsDashboard() {
-  let startVal = document.getElementById('periodSelectStart').value;
-  let endVal = document.getElementById('periodSelectEnd').value;
+  const startEl = document.getElementById('periodSelectStart');
+  const endEl = document.getElementById('periodSelectEnd');
+  let startVal = startEl ? startEl.value : '';
+  let endVal = endEl ? endEl.value : '';
 
   if (startVal && endVal && startVal > endVal) {
     const temp = startVal;
@@ -561,7 +599,8 @@ function renderAnalyticsDashboard() {
     periodSubtitleText = startVal === endVal ? startVal : `${startVal} 〜 ${endVal}`;
   }
 
-  document.getElementById('tablePeriodSubtitle').textContent = periodSubtitleText;
+  const subEl = document.getElementById('tablePeriodSubtitle');
+  if (subEl) subEl.textContent = periodSubtitleText;
 
   let totalPnl = 0;
   filteredTrades.forEach(t => {
@@ -570,21 +609,26 @@ function renderAnalyticsDashboard() {
   });
 
   const chartTotalEl = document.getElementById('chartTotalLabel');
-  chartTotalEl.textContent = formatJPY(totalPnl);
-  chartTotalEl.style.color = totalPnl >= 0 ? 'var(--color-win)' : 'var(--color-loss)';
+  if (chartTotalEl) {
+    chartTotalEl.textContent = formatJPY(totalPnl);
+    chartTotalEl.style.color = totalPnl >= 0 ? 'var(--color-win)' : 'var(--color-loss)';
+  }
 
   renderAnalyticsChart(filteredTrades, startVal, endVal);
   renderPerformanceTables(filteredTrades);
 }
 
 function renderAnalyticsChart(filteredTrades, startVal, endVal) {
-  const ctx = document.getElementById('analyticsChart').getContext('2d');
+  const canvas = document.getElementById('analyticsChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
   
   if (analyticsChartInstance) analyticsChartInstance.destroy();
   if (filteredTrades.length === 0) return;
 
   if (activeChartType === 'doughnut') {
-    document.getElementById('chartTitleLabel').textContent = '大項目別の収支構成';
+    const titleLbl = document.getElementById('chartTitleLabel');
+    if (titleLbl) titleLbl.textContent = '大項目別の収支構成';
 
     const catMap = {};
     filteredTrades.forEach(t => {
@@ -641,7 +685,8 @@ function renderAnalyticsChart(filteredTrades, startVal, endVal) {
     });
 
   } else {
-    document.getElementById('chartTitleLabel').textContent = '収益推移（棒グラフ ＆ 累積折れ線）';
+    const titleLbl = document.getElementById('chartTitleLabel');
+    if (titleLbl) titleLbl.textContent = '収益推移（棒グラフ ＆ 累積折れ線）';
 
     let groupedMap = {};
     let labels = [];
@@ -748,12 +793,13 @@ function renderPerformanceTables(filteredTrades) {
   const tbody = document.getElementById('performanceTableBody');
   const titleLabel = document.getElementById('tableTitleLabel');
   
+  if (!tbody || !headerRow) return;
   tbody.innerHTML = '';
 
   const groupMap = {};
 
   if (activeTableGroup === 'category') {
-    titleLabel.textContent = '大項目別・パフォーマンス分析';
+    if (titleLabel) titleLabel.textContent = '大項目別・パフォーマンス分析';
     headerRow.innerHTML = `
       <th>大項目名</th>
       <th>収支</th>
@@ -773,7 +819,7 @@ function renderPerformanceTables(filteredTrades) {
     });
 
   } else if (activeTableGroup === 'item') {
-    titleLabel.textContent = '小項目別・パフォーマンス分析';
+    if (titleLabel) titleLabel.textContent = '小項目別・パフォーマンス分析';
     headerRow.innerHTML = `
       <th>小項目名 (銘柄 / 通貨ペア)</th>
       <th>収支</th>
@@ -793,7 +839,7 @@ function renderPerformanceTables(filteredTrades) {
     });
 
   } else if (activeTableGroup === 'memo') {
-    titleLabel.textContent = 'メモ・根拠別・パフォーマンス分析';
+    if (titleLabel) titleLabel.textContent = 'メモ・根拠別・パフォーマンス分析';
     headerRow.innerHTML = `
       <th>メモ / トレード根拠</th>
       <th>収支</th>
@@ -813,7 +859,7 @@ function renderPerformanceTables(filteredTrades) {
     });
 
   } else if (activeTableGroup === 'month') {
-    titleLabel.textContent = '月別・パフォーマンス分析';
+    if (titleLabel) titleLabel.textContent = '月別・パフォーマンス分析';
     headerRow.innerHTML = `
       <th>年月</th>
       <th>収支</th>
@@ -912,11 +958,10 @@ function parseAndImportExcelFile(file) {
         return;
       }
 
-      // Check if 1st row is header
       let startRowIdx = 0;
       const firstRow = jsonRows[0];
       if (firstRow && firstRow[0] && String(firstRow[0]).includes('日')) {
-        startRowIdx = 1; // Skip header row
+        startRowIdx = 1;
       }
 
       const importedTrades = [];
@@ -926,7 +971,6 @@ function parseAndImportExcelFile(file) {
         const row = jsonRows[i];
         if (!row || row.length === 0 || !row[0]) continue;
 
-        // Parse Date (A列)
         let dateStr = '';
         if (row[0] instanceof Date) {
           const d = row[0];
@@ -943,19 +987,15 @@ function parseAndImportExcelFile(file) {
           continue;
         }
 
-        // B列: 大項目
         let category = row[1] ? String(row[1]).trim() : 'FXデイトレ';
         if (category === '仮想通貨') category = '自動売買';
         newCategoriesSet.add(category);
 
-        // C列: 小項目
         const item = row[2] ? String(row[2]).trim() : category;
 
-        // D列: 利益, E列: 損失
         const profit = Math.abs(Number(row[3])) || 0;
         const loss = Math.abs(Number(row[4])) || 0;
 
-        // F列: メモ
         const memo = row[5] ? String(row[5]).trim() : '';
 
         importedTrades.push({
@@ -986,8 +1026,10 @@ function parseAndImportExcelFile(file) {
       saveCategories();
       saveTrades();
 
-      document.getElementById('excelImportModalOverlay').classList.remove('active');
-      document.getElementById('excelFileInput').value = '';
+      const modal = document.getElementById('excelImportModalOverlay');
+      if (modal) modal.classList.remove('active');
+      const input = document.getElementById('excelFileInput');
+      if (input) input.value = '';
 
       renderApp();
       alert(`🎉 Excelから ${importedTrades.length} 件の取り込みが正常完了しました！`);
@@ -1058,7 +1100,8 @@ function exportDataToGDriveFile() {
 }
 
 function triggerImportDataFile() {
-  document.getElementById('importFileInput').click();
+  const input = document.getElementById('importFileInput');
+  if (input) input.click();
 }
 
 function handleImportFileSelect(e) {
@@ -1087,20 +1130,25 @@ function handleImportFileSelect(e) {
 }
 
 /* =========================================================
-   8. Event Listeners Setup
+   8. Event Listeners Setup (Null-safe Registration)
    ========================================================= */
 function setupEventListeners() {
-  document.getElementById('prevMonthBtn').addEventListener('click', () => {
+  const addEvt = (id, event, fn) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener(event, fn);
+  };
+
+  addEvt('prevMonthBtn', 'click', () => {
     currentDate.setMonth(currentDate.getMonth() - 1);
     renderApp();
   });
 
-  document.getElementById('nextMonthBtn').addEventListener('click', () => {
+  addEvt('nextMonthBtn', 'click', () => {
     currentDate.setMonth(currentDate.getMonth() + 1);
     renderApp();
   });
 
-  document.getElementById('todayBtn').addEventListener('click', () => {
+  addEvt('todayBtn', 'click', () => {
     currentDate = new Date();
     selectedDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`;
     renderApp();
@@ -1108,45 +1156,47 @@ function setupEventListeners() {
 
   const drawerOverlay = document.getElementById('menuDrawerOverlay');
   const drawer = document.getElementById('menuDrawer');
-  
-  document.getElementById('openMenuBtn').addEventListener('click', () => {
-    drawerOverlay.classList.add('active');
-    drawer.classList.add('active');
-  });
 
   const closeMenu = () => {
-    drawerOverlay.classList.remove('active');
-    drawer.classList.remove('active');
+    if (drawerOverlay) drawerOverlay.classList.remove('active');
+    if (drawer) drawer.classList.remove('active');
   };
 
-  document.getElementById('closeMenuBtn').addEventListener('click', closeMenu);
-  drawerOverlay.addEventListener('click', (e) => {
-    if (e.target === drawerOverlay) closeMenu();
+  addEvt('openMenuBtn', 'click', () => {
+    if (drawerOverlay) drawerOverlay.classList.add('active');
+    if (drawer) drawer.classList.add('active');
   });
 
-  document.getElementById('menuSummaryBtn').addEventListener('click', () => {
+  addEvt('closeMenuBtn', 'click', closeMenu);
+
+  if (drawerOverlay) {
+    drawerOverlay.addEventListener('click', (e) => {
+      if (e.target === drawerOverlay) closeMenu();
+    });
+  }
+
+  addEvt('menuSummaryBtn', 'click', () => {
     closeMenu();
     openSummaryModal();
   });
 
-  // Excel Import Modal Listeners
   const excelModal = document.getElementById('excelImportModalOverlay');
-  document.getElementById('openExcelImportBtn').addEventListener('click', () => {
+  addEvt('openExcelImportBtn', 'click', () => {
     closeMenu();
-    excelModal.classList.add('active');
+    if (excelModal) excelModal.classList.add('active');
   });
 
-  document.getElementById('closeExcelImportModalBtn').addEventListener('click', () => {
-    excelModal.classList.remove('active');
+  addEvt('closeExcelImportModalBtn', 'click', () => {
+    if (excelModal) excelModal.classList.remove('active');
   });
 
-  document.getElementById('downloadSampleExcelBtn').addEventListener('click', () => {
+  addEvt('downloadSampleExcelBtn', 'click', () => {
     downloadSampleExcelTemplate();
   });
 
-  document.getElementById('startExcelImportBtn').addEventListener('click', () => {
+  addEvt('startExcelImportBtn', 'click', () => {
     const fileInput = document.getElementById('excelFileInput');
-    if (fileInput.files.length === 0) {
+    if (!fileInput || fileInput.files.length === 0) {
       alert('Excelファイル（.xlsx / .xls）を選択してください。');
       return;
     }
@@ -1154,18 +1204,19 @@ function setupEventListeners() {
   });
 
   const catModal = document.getElementById('categoryManageModalOverlay');
-  document.getElementById('manageCategoriesBtn').addEventListener('click', () => {
+  addEvt('manageCategoriesBtn', 'click', () => {
     closeMenu();
     renderCategoryManageList();
-    catModal.classList.add('active');
+    if (catModal) catModal.classList.add('active');
   });
 
-  document.getElementById('closeCategoryManageModalBtn').addEventListener('click', () => {
-    catModal.classList.remove('active');
+  addEvt('closeCategoryManageModalBtn', 'click', () => {
+    if (catModal) catModal.classList.remove('active');
   });
 
-  document.getElementById('addCategoryBtn').addEventListener('click', () => {
+  addEvt('addCategoryBtn', 'click', () => {
     const input = document.getElementById('newCategoryNameInput');
+    if (!input) return;
     const newCat = input.value.trim();
     if (!newCat) {
       alert('大項目名を入力してください。');
@@ -1185,41 +1236,46 @@ function setupEventListeners() {
   const catSelect = document.getElementById('tradeCategorySelect');
   const customCatInput = document.getElementById('customCategoryInput');
 
-  catSelect.addEventListener('change', (e) => {
-    if (e.target.value === '__NEW__') {
-      customCatInput.style.display = 'block';
-      customCatInput.required = true;
-      customCatInput.focus();
-    } else {
-      customCatInput.style.display = 'none';
-      customCatInput.required = false;
-    }
-  });
+  if (catSelect) {
+    catSelect.addEventListener('change', (e) => {
+      if (e.target.value === '__NEW__') {
+        if (customCatInput) {
+          customCatInput.style.display = 'block';
+          customCatInput.required = true;
+          customCatInput.focus();
+        }
+      } else {
+        if (customCatInput) {
+          customCatInput.style.display = 'none';
+          customCatInput.required = false;
+        }
+      }
+    });
+  }
 
-  // Export Buttons
-  document.getElementById('exportCSVBtn').addEventListener('click', () => {
+  addEvt('exportCSVBtn', 'click', () => {
     closeMenu();
     exportDataToCSV();
   });
 
-  document.getElementById('exportGDriveBtn').addEventListener('click', () => {
+  addEvt('exportGDriveBtn', 'click', () => {
     closeMenu();
     exportDataToGDriveFile();
   });
 
-  document.getElementById('importGDriveBtn').addEventListener('click', () => {
+  addEvt('importGDriveBtn', 'click', () => {
     closeMenu();
     triggerImportDataFile();
   });
 
-  document.getElementById('enableAutoSyncBtn').addEventListener('click', () => {
+  addEvt('enableAutoSyncBtn', 'click', () => {
     closeMenu();
     enableGoogleDriveAutoSync();
   });
 
-  document.getElementById('importFileInput').addEventListener('change', handleImportFileSelect);
+  addEvt('importFileInput', 'change', handleImportFileSelect);
 
-  document.getElementById('menuResetDataBtn').addEventListener('click', () => {
+  addEvt('menuResetDataBtn', 'click', () => {
     if (confirm('過去データを再読み込みしますか？現在の入力内容はリセットされます。')) {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(CATEGORIES_KEY);
@@ -1230,7 +1286,7 @@ function setupEventListeners() {
     }
   });
 
-  document.getElementById('closeSummaryModalBtn').addEventListener('click', closeSummaryModal);
+  addEvt('closeSummaryModalBtn', 'click', closeSummaryModal);
 
   document.querySelectorAll('#periodTypeTabs .tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1242,11 +1298,11 @@ function setupEventListeners() {
     });
   });
 
-  document.getElementById('periodSelectStart').addEventListener('change', () => {
+  addEvt('periodSelectStart', 'change', () => {
     renderAnalyticsDashboard();
   });
 
-  document.getElementById('periodSelectEnd').addEventListener('change', () => {
+  addEvt('periodSelectEnd', 'change', () => {
     renderAnalyticsDashboard();
   });
 
@@ -1257,11 +1313,13 @@ function setupEventListeners() {
       activeChartType = e.target.dataset.chart;
       
       const chartBox = document.getElementById('chartBox');
-      if (activeChartType === 'table') {
-        chartBox.style.display = 'none';
-      } else {
-        chartBox.style.display = 'block';
-        renderAnalyticsDashboard();
+      if (chartBox) {
+        if (activeChartType === 'table') {
+          chartBox.style.display = 'none';
+        } else {
+          chartBox.style.display = 'block';
+          renderAnalyticsDashboard();
+        }
       }
     });
   });
@@ -1276,59 +1334,74 @@ function setupEventListeners() {
   });
 
   const addModal = document.getElementById('addTradeModalOverlay');
-  document.getElementById('openAddTradeBtn').addEventListener('click', () => {
-    document.getElementById('tradeDateInput').value = selectedDateStr;
-    document.getElementById('tradeProfitInput').value = 0;
-    document.getElementById('tradeLossInput').value = 0;
-    customCatInput.style.display = 'none';
-    customCatInput.required = false;
-    addModal.classList.add('active');
-  });
-
-  document.getElementById('closeTradeModalBtn').addEventListener('click', () => {
-    addModal.classList.remove('active');
-  });
-
-  document.getElementById('tradeForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const date = document.getElementById('tradeDateInput').value;
-    let category = document.getElementById('tradeCategorySelect').value;
-    
-    if (category === '__NEW__') {
-      category = customCatInput.value.trim();
-      if (!category) return;
-      if (!categories.includes(category)) {
-        categories.push(category);
-        saveCategories();
-      }
+  addEvt('openAddTradeBtn', 'click', () => {
+    const dInput = document.getElementById('tradeDateInput');
+    if (dInput) dInput.value = selectedDateStr;
+    const pInput = document.getElementById('tradeProfitInput');
+    if (pInput) pInput.value = 0;
+    const lInput = document.getElementById('tradeLossInput');
+    if (lInput) lInput.value = 0;
+    if (customCatInput) {
+      customCatInput.style.display = 'none';
+      customCatInput.required = false;
     }
-
-    const item = document.getElementById('tradeItemInput').value.trim();
-    const profit = Number(document.getElementById('tradeProfitInput').value) || 0;
-    const loss = Number(document.getElementById('tradeLossInput').value) || 0;
-    const memo = document.getElementById('tradeMemoInput').value.trim();
-
-    const newTrade = {
-      id: Date.now().toString(),
-      date,
-      category,
-      item,
-      profit,
-      loss,
-      memo
-    };
-
-    trades.push(newTrade);
-    saveTrades();
-    
-    addModal.classList.remove('active');
-    document.getElementById('tradeForm').reset();
-    
-    selectedDateStr = date;
-    const [y, m] = date.split('-').map(Number);
-    currentDate = new Date(y, m - 1, 1);
-    
-    renderApp();
+    if (addModal) addModal.classList.add('active');
   });
+
+  addEvt('closeTradeModalBtn', 'click', () => {
+    if (addModal) addModal.classList.remove('active');
+  });
+
+  const form = document.getElementById('tradeForm');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const date = document.getElementById('tradeDateInput').value;
+      let category = document.getElementById('tradeCategorySelect').value;
+      
+      if (category === '__NEW__') {
+        category = customCatInput ? customCatInput.value.trim() : '';
+        if (!category) return;
+        if (!categories.includes(category)) {
+          categories.push(category);
+          saveCategories();
+        }
+      }
+
+      const itemInput = document.getElementById('tradeItemInput');
+      const item = itemInput ? itemInput.value.trim() : category;
+
+      const pInput = document.getElementById('tradeProfitInput');
+      const profit = pInput ? (Number(pInput.value) || 0) : 0;
+
+      const lInput = document.getElementById('tradeLossInput');
+      const loss = lInput ? (Number(lInput.value) || 0) : 0;
+
+      const mInput = document.getElementById('tradeMemoInput');
+      const memo = mInput ? mInput.value.trim() : '';
+
+      const newTrade = {
+        id: Date.now().toString(),
+        date,
+        category,
+        item,
+        profit,
+        loss,
+        memo
+      };
+
+      trades.push(newTrade);
+      saveTrades();
+      
+      if (addModal) addModal.classList.remove('active');
+      form.reset();
+      
+      selectedDateStr = date;
+      const [y, m] = date.split('-').map(Number);
+      currentDate = new Date(y, m - 1, 1);
+      
+      renderApp();
+    });
+  }
 }
