@@ -125,17 +125,6 @@
       box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
     }
 
-    .sync-badge.syncing .sync-dot {
-      background-color: #06b6d4;
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.3; }
-      50% { opacity: 1; }
-      100% { opacity: 0.3; }
-    }
-
     .icon-btn {
       background: transparent;
       border: none;
@@ -440,14 +429,14 @@
     .summary-pnl.win { color: var(--color-win); }
     .summary-pnl.loss { color: var(--color-loss); }
 
-    /* Modal Overlay: Explicitly hidden by default to prevent blocking clicks */
+    /* Modal Overlay */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
+      background-color: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       z-index: 500;
       display: none !important;
@@ -455,7 +444,6 @@
       align-items: center;
       opacity: 0;
       pointer-events: none !important;
-      transition: opacity 0.2s ease;
     }
 
     .modal-overlay.active {
@@ -534,7 +522,6 @@
       display: none !important;
       opacity: 0;
       pointer-events: none !important;
-      transition: opacity 0.25s ease;
     }
     
     .menu-backdrop.active {
@@ -574,13 +561,11 @@
     }
 
     .menu-list {
-      list-style: none;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    /* Semantic Button styling for menu items for guaranteed touch / click handling */
     .menu-item-btn {
       width: 100%;
       text-align: left;
@@ -704,7 +689,7 @@
     
     <header class="app-header">
       <div class="app-title">
-        <span>Trade</span>Analytics
+        <span>Trade</span>Analytics <span style="font-size:0.65rem; color:#10b981; font-weight:normal;">v3.0</span>
       </div>
       <div id="gdriveSyncBadge" class="sync-badge" title="Google Drive 蜷梧悄繧ｹ繝・・繧ｿ繧ｹ">
         <span class="sync-dot"></span>
@@ -789,14 +774,14 @@
       <button class="icon-btn" onclick="window.closeDrawerMenu()">笨・/button>
     </div>
     <div class="menu-list">
-      <button class="menu-item-btn" onclick="window.handleMenuAction('summary')">投 繧ｵ繝槭Μ繝ｼ繝ｻ隧ｳ邏ｰ蛻・梵</button>
-      <button class="menu-item-btn" onclick="window.handleMenuAction('excel_import')" style="color:#10b981; font-weight:bold;">踏 Excel (xlsx) 縺九ｉ蜿悶ｊ霎ｼ縺ｿ</button>
-      <button class="menu-item-btn" onclick="window.handleMenuAction('export_csv')">投 CSV繧ｨ繧ｯ繧ｹ繝昴・繝・(Excel逕ｨ)</button>
-      <button class="menu-item-btn" onclick="window.handleMenuAction('categories')">捷・・螟ｧ鬆・岼縺ｮ邱ｨ髮・・霑ｽ蜉</button>
-      <button class="menu-item-btn" onclick="window.handleMenuAction('export_json')" style="color:var(--color-accent);">逃 JSON繝舌ャ繧ｯ繧｢繝・・蜃ｺ蜉・/button>
-      <button class="menu-item-btn" onclick="window.handleMenuAction('import_json')">唐 JSON繝輔ぃ繧､繝ｫ縺九ｉ蠕ｩ蜈・/button>
-      <button class="menu-item-btn" onclick="window.handleMenuAction('autosync')" style="color:#3b82f6;">笘・ｸ・Google Drive 蜈ｨ閾ｪ蜍募酔譛溯ｨｭ螳・/button>
-      <button class="menu-item-btn" onclick="window.handleMenuAction('reset_history')" style="color:#ef4444;">売 驕主悉繝・・繧ｿ蜈ｨ莉ｶ繧貞・繝ｭ繝ｼ繝・/button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('summary')">投 繧ｵ繝槭Μ繝ｼ繝ｻ隧ｳ邏ｰ蛻・梵</button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('excel_import')" style="color:#10b981; font-weight:bold;">踏 Excel (xlsx) 縺九ｉ蜿悶ｊ霎ｼ縺ｿ</button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('export_csv')">投 CSV繧ｨ繧ｯ繧ｹ繝昴・繝・(Excel逕ｨ)</button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('categories')">捷・・螟ｧ鬆・岼縺ｮ邱ｨ髮・・霑ｽ蜉</button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('export_json')" style="color:var(--color-accent);">逃 JSON繝舌ャ繧ｯ繧｢繝・・蜃ｺ蜉・/button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('import_json')">唐 JSON繝輔ぃ繧､繝ｫ縺九ｉ蠕ｩ蜈・/button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('autosync')" style="color:#3b82f6;">笘・ｸ・Google Drive 蜈ｨ閾ｪ蜍募酔譛溯ｨｭ螳・/button>
+      <button type="button" class="menu-item-btn" onclick="window.handleMenuAction('reset_history')" style="color:#ef4444;">売 驕主悉繝・・繧ｿ蜈ｨ莉ｶ繧貞・繝ｭ繝ｼ繝・/button>
     </div>
   </div>
 
