@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Trade Analytics Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js DataLabels Plugin CDN (円グラフ内に項目名・割合を表示) -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <!-- SheetJS CDN (Excel .xlsx 解析ライブラリ) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- Google Identity Services & GAPI Client for Google Drive Integration -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js" async defer></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="app-title">
+        <span>Trade</span>Analytics
+      </div>
+      <!-- Sync Status Indicator -->
+      <div id="gdriveSyncBadge" class="sync-badge" title="Google Drive 同期ステータス">
+        <span class="sync-dot"></span>
+        <span id="syncStatusText">ローカル</span>
+      </div>
+      <button class="icon-btn" id="openMenuBtn" aria-label="メニュー">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Top Half: Calendar Section -->
+    <section class="calendar-section">
+      <div class="calendar-header">
+        <div class="current-month" id="calendarMonthLabel">2026年 8月</div>
+        <div class="calendar-nav">
+          <button class="icon-btn" id="prevMonthBtn" title="前月">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button class="icon-btn" id="todayBtn" title="今月" style="font-size:0.75rem; font-weight:bold;">今日</button>
+          <button class="icon-btn" id="nextMonthBtn" title="次月">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Weekday Headers -->
+      <div class="weekdays-grid">
+        <div class="weekday sun">日</div>
+        <div class="weekday">月</div>
+        <div class="weekday">火</div>
+        <div class="weekday">水</div>
+        <div class="weekday">木</div>
+        <div class="weekday">金</div>
+        <div class="weekday sat">土</div>
+      </div>
+
+      <!-- Days Grid (Standard 7-column layout) -->
+      <div class="days-grid" id="daysGrid"></div>
+    </section>
+
+    <!-- Bottom Half: Selected Day Details & Category PnL -->
+    <section class="details-section">
+      <div class="section-title-bar">
+        <div class="selected-date-title" id="selectedDateTitle">2026/08/03 (月) の損益明細</div>
+        <div class="day-summary-pills">
+          <div class="pill win" id="dayPnlPill">+¥0</div>
+        </div>
+      </div>
+
+      <!-- List of Category PnL Cards for Selected Day -->
+      <div class="category-list" id="categoryList"></div>
+
+      <!-- Add Trade Button -->
+      <button class="add-trade-btn" id="openAddTradeBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        トレード結果を追加
+      </button>
+    </section>
+
+    <!-- Fixed Bottom Summary Footer (Monthly, Yearly, Lifetime) -->
+    <footer class="fixed-summary-footer">
+      <div class="summary-col">
+        <div class="summary-col-title">月間</div>
+        <div class="summary-row"><span>利益</span><span id="footerMonthProfit" style="color:var(--color-win);">¥0</span></div>
+        <div class="summary-row"><span>損失</span><span id="footerMonthLoss" style="color:var(--color-loss);">¥0</span></div>
+        <div class="summary-pnl win" id="footerMonthPnl">¥0</div>
+      </div>
+      <div class="summary-col">
+        <div class="summary-col-title">年間 (2026)</div>
+        <div class="summary-row"><span>利益</span><span id="footerYearProfit" style="color:var(--color-win);">¥0</span></div>
+        <div class="summary-row"><span>損失</span><span id="footerYearLoss" style="color:var(--color-loss);">¥0</span></div>
+        <div class="summary-pnl win" id="footerYearPnl">¥0</div>
+      </div>
+      <div class="summary-col">
+        <div class="summary-col-title">生涯 (全期間)</div>
+        <div class="summary-row"><span>利益</span><span id="footerLifeProfit" style="color:var(--color-win);">¥0</span></div>
+        <div class="summary-row"><span>損失</span><span id="footerLifeLoss" style="color:var(--color-loss);">¥0</span></div>
+        <div class="summary-pnl win" id="footerLifePnl">¥0</div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Right Drawer Menu -->
+  <div class="modal-overlay" id="menuDrawerOverlay">
+    <div class="menu-drawer" id="menuDrawer">
+      <div class="menu-header">
+        <div class="app-title"><span>メニュー</span></div>
+        <button class="icon-btn" id="closeMenuBtn">✕</button>
+      </div>
+      <ul class="menu-list">
+        <li class="menu-item" id="menuSummaryBtn">
+          📊 サマリー・詳細分析
+        </li>
+        <li class="menu-item" id="openExcelImportBtn" style="color:#10b981; font-weight:bold;">
+          📥 Excel (xlsx) から取り込み
+        </li>
+        <li class="menu-item" id="exportCSVBtn">
+          📊 CSVエクスポート (Excel用)
+        </li>
+        <li class="menu-item" id="manageCategoriesBtn">
+          🏷️ 大項目の編集・追加
+        </li>
+        <li class="menu-item" id="exportGDriveBtn" style="color:var(--color-accent);">
+          📦 JSONバックアップ出力
+        </li>
+        <li class="menu-item" id="importGDriveBtn">
+          📂 JSONファイルから復元
+        </li>
+        <li class="menu-item" id="enableAutoSyncBtn" style="color:#3b82f6;">
+          ☁️ Google Drive 全自動同期設定
+        </li>
+        <li class="menu-item" id="menuResetDataBtn" style="color:#ef4444;">
+          🔄 過去データ全件を再ロード
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Excel Import & Format Explanation Modal -->
+  <div class="modal-overlay" id="excelImportModalOverlay">
+    <div class="modal-content" style="max-width:550px;">
+      <div class="modal-header">
+        <div class="modal-title">📥 Excel (xlsx) 取り込みガイド</div>
+        <button class="icon-btn" id="closeExcelImportModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+          Excelファイル（.xlsx / .xls）のトレード記録を一括インポートします。<br>
+          以下の指定フォーマット（A列〜F列）で作成したExcelファイルを選択してください。
+        </div>
+
+        <!-- Excel Format Spec Table -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:14px;">
+          <div style="background:rgba(255,255,255,0.05); padding:8px 12px; font-weight:700; font-size:0.85rem; border-bottom:1px solid var(--border-color); color:var(--color-accent);">
+            📌 A列からのExcel列配置ルール（ヘッダー1行目あり）
+          </div>
+          <table class="data-table" style="font-size:0.8rem;">
+            <thead>
+              <tr>
+                <th style="width:15%;">列</th>
+                <th style="width:25%;">項目名</th>
+                <th>入力内容と記載例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:700; color:#3b82f6;">A列</td>
+                <td style="font-weight:600;">日付</td>
+                <td>`2026/08/03` や `2026-08-03`</td>
+              </tr>
+              <tr>
+                <td style="font-weight:700; color:#3b82f6;">B列</td>
+                <td style="font-weight:600;">大項目</td>
+                <td>`FXデイトレ`, `FXスイング`, `自動売買`, `株指数`, `商品` 等</td>
+              </tr>
+              <tr>
+                <td style="font-weight:700; color:#3b82f6;">C列</td>
+                <td style="font-weight:600;">小項目</td>
+                <td>`USD/JPY`, `スイス円`, `ゴールド`, `日経225` 等</td>
+              </tr>
+              <tr>
+                <td style="font-weight:700; color:#3b82f6;">D列</td>
+                <td style="font-weight:600;">利益額</td>
+                <td>`5000` (利益額。利益がない場合は 0 または空)</td>
+              </tr>
+              <tr>
+                <td style="font-weight:700; color:#3b82f6;">E列</td>
+                <td style="font-weight:600;">損失額</td>
+                <td>`1200` (損失額。損がない場合は 0 または空)</td>
+              </tr>
+              <tr>
+                <td style="font-weight:700; color:#3b82f6;">F列</td>
+                <td style="font-weight:600;">メモ</td>
+                <td>`押し目買い`, `ロンドンブレイク` 等（任意）</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Download Sample Template Button -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:rgba(16, 185, 129, 0.1); padding:10px 12px; border-radius:6px; border:1px solid rgba(16, 185, 129, 0.3);">
+          <span style="font-size:0.8rem; font-weight:600; color:#10b981;">💡 フォーマット用サンプルExcelをダウンロード</span>
+          <button id="downloadSampleExcelBtn" class="add-trade-btn" style="width:auto; padding:4px 12px; font-size:0.75rem;">テンプレート取得</button>
+        </div>
+
+        <!-- Excel File Selection -->
+        <div class="form-group">
+          <label class="form-label" style="font-weight:700;">Excelファイル（.xlsx / .xls）を選択</label>
+          <input type="file" class="form-input" id="excelFileInput" accept=".xlsx, .xls" style="padding:8px;">
+        </div>
+
+        <button id="startExcelImportBtn" class="add-trade-btn" style="margin-top:10px; background:#10b981;">
+          Excelファイルからデータをインポート
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden File Input for JSON Restore -->
+  <input type="file" id="importFileInput" accept=".json,.csv" style="display:none;">
+
+  <!-- Manage Categories Modal -->
+  <div class="modal-overlay" id="categoryManageModalOverlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">🏷️ 大項目の管理・追加</div>
+        <button class="icon-btn" id="closeCategoryManageModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">新しい大項目を追加</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" class="form-input" id="newCategoryNameInput" placeholder="例: 暗号資産, バイナリーオプション">
+            <button class="add-trade-btn" id="addCategoryBtn" style="width:auto; padding:0 16px; whitespace:nowrap;">追加</button>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label class="form-label">登録済みの大項目一覧</label>
+          <div id="categoryManageList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary & Analytics Modal (Full Detailed View) -->
+  <div class="modal-overlay" id="summaryModalOverlay">
+    <div class="modal-content" style="height:92vh;">
+      <div class="modal-header">
+        <div class="modal-title">📊 サマリー・分析レポート</div>
+        <button class="icon-btn" id="closeSummaryModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Controls: Period Selector & View Mode -->
+        <div class="summary-controls">
+          
+          <!-- Period Selector: Year, Month, Day, Lifetime -->
+          <div class="tab-group" id="periodTypeTabs">
+            <button class="tab-btn" data-period="all">生涯</button>
+            <button class="tab-btn" data-period="year">年別</button>
+            <button class="tab-btn active" data-period="month">月別</button>
+            <button class="tab-btn" data-period="day">日別</button>
+          </div>
+
+          <!-- Dynamic Period Selector Range (Start ~ End Dual Dropdowns) -->
+          <div class="filter-row" id="periodSelectContainer" style="display:flex; align-items:center; gap:8px;">
+            <select class="form-select" id="periodSelectStart" style="flex:1;"></select>
+            <span style="color:var(--text-muted); font-weight:bold; font-size:0.9rem;">〜</span>
+            <select class="form-select" id="periodSelectEnd" style="flex:1;"></select>
+          </div>
+
+          <!-- Chart / Table Mode Selector -->
+          <div class="tab-group" id="chartTypeTabs">
+            <button class="tab-btn active" data-chart="doughnut">🍩 円グラフ (構成比)</button>
+            <button class="tab-btn" data-chart="bar">📈 収益推移 (棒・折れ線)</button>
+            <button class="tab-btn" data-chart="table">📋 集計一覧</button>
+          </div>
+
+        </div>
+
+        <!-- Chart Display Box -->
+        <div class="chart-container-box" id="chartBox">
+          <div class="chart-title">
+            <span id="chartTitleLabel">大項目・小項目別の収支構成</span>
+            <span id="chartTotalLabel" style="color:var(--color-win); font-weight:800;">+¥0</span>
+          </div>
+          <div class="canvas-wrapper">
+            <canvas id="analyticsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Performance Data Table Container -->
+        <div class="data-table-container">
+          
+          <!-- Sub-tabs for Table View Switch: Category vs Item vs Memo vs Month -->
+          <div style="padding:10px 12px; border-bottom:1px solid var(--border-color); display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span id="tableTitleLabel" style="font-weight:700; font-size:0.85rem;">パフォーマンス分析</span>
+              <span id="tablePeriodSubtitle" style="color:var(--text-muted); font-size:0.75rem;">2026年8月</span>
+            </div>
+            
+            <div class="tab-group" id="tableGroupTabs" style="margin-top:2px;">
+              <button class="tab-btn active" data-tablegroup="category">🏷️ 大項目別</button>
+              <button class="tab-btn" data-tablegroup="item">📌 小項目別</button>
+              <button class="tab-btn" data-tablegroup="memo">📝 メモ別</button>
+              <button class="tab-btn" data-tablegroup="month">📅 月別</button>
+            </div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr id="performanceTableHeaderRow">
+                <th>大項目名</th>
+                <th>収支</th>
+                <th>回数 (勝-負)</th>
+                <th>勝率</th>
+              </tr>
+            </thead>
+            <tbody id="performanceTableBody"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit Trade Modal -->
+  <div class="modal-overlay" id="addTradeModalOverlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="tradeModalTitle">トレード結果の追加</div>
+        <button class="icon-btn" id="closeTradeModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="tradeForm">
+          
+          <div class="form-group">
+            <label class="form-label">日付</label>
+            <input type="date" class="form-input" id="tradeDateInput" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">大項目 (分類・手法)</label>
+            <select class="form-select" id="tradeCategorySelect"></select>
+            <input type="text" class="form-input" id="customCategoryInput" placeholder="新しい大項目を入力してください" style="display:none; margin-top:6px;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">小項目 (銘柄 / 通貨ペア)</label>
+            <input type="text" class="form-input" id="tradeItemInput" placeholder="例: USD/JPY, 金 (XAUUSD), 日経225" list="suggestedItemsList" required>
+            <datalist id="suggestedItemsList">
+              <option value="USD/JPY"></option>
+              <option value="EUR/USD"></option>
+              <option value="GBP/JPY"></option>
+              <option value="金 (XAUUSD)"></option>
+              <option value="小麦 (Wheat)"></option>
+              <option value="原油 (WTI)"></option>
+              <option value="日経225"></option>
+              <option value="S&P500"></option>
+              <option value="NASDAQ100"></option>
+            </datalist>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="color:var(--color-win);">利益額 (￥)</label>
+              <input type="number" class="form-input" id="tradeProfitInput" placeholder="0" min="0" value="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="color:var(--color-loss);">損失額 (￥)</label>
+              <input type="number" class="form-input" id="tradeLossInput" placeholder="0" min="0" value="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">メモ (根拠・反省点など)</label>
+            <input type="text" class="form-input" id="tradeMemoInput" placeholder="押し目買い, ロンドンブレイクなど">
+          </div>
+
+          <button type="submit" class="add-trade-btn" style="margin-top:10px;">
+            保存する (自動同期)
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="convert_user_history.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
