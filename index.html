@@ -12,6 +12,77 @@
   <!-- SheetJS CDN (Excel .xlsx 隗｣譫舌Λ繧､繝悶Λ繝ｪ) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
+  <script>
+    // Bulletproof Global Handlers (Declared early in Head)
+    window.openDrawerMenu = function() {
+      try {
+        var bd = document.getElementById('menuDrawerOverlay');
+        var dr = document.getElementById('menuDrawer');
+        if (bd) { bd.style.display = 'block'; bd.classList.add('active'); }
+        if (dr) { dr.style.right = '0px'; dr.classList.add('active'); }
+      } catch(e) { console.error(e); }
+    };
+
+    window.closeDrawerMenu = function() {
+      try {
+        var bd = document.getElementById('menuDrawerOverlay');
+        var dr = document.getElementById('menuDrawer');
+        if (bd) { bd.style.display = 'none'; bd.classList.remove('active'); }
+        if (dr) { dr.style.right = '-320px'; dr.classList.remove('active'); }
+      } catch(e) { console.error(e); }
+    };
+
+    window.closeAllModals = function() {
+      try {
+        var overlays = document.querySelectorAll('.modal-overlay');
+        overlays.forEach(function(el) {
+          el.style.display = 'none';
+          el.classList.remove('active');
+        });
+      } catch(e) {}
+    };
+
+    window.handleMenuAction = function(action) {
+      try {
+        window.closeDrawerMenu();
+        window.closeAllModals();
+
+        setTimeout(function() {
+          if (action === 'summary') {
+            var el = document.getElementById('summaryModalOverlay');
+            if (el) { el.style.display = 'flex'; el.classList.add('active'); }
+            if (typeof window.updatePeriodOptions === 'function') window.updatePeriodOptions();
+            if (typeof window.renderAnalyticsDashboard === 'function') window.renderAnalyticsDashboard();
+          } else if (action === 'excel_import') {
+            var el = document.getElementById('excelImportModalOverlay');
+            if (el) { el.style.display = 'flex'; el.classList.add('active'); }
+          } else if (action === 'export_csv') {
+            if (typeof window.exportDataToCSV === 'function') window.exportDataToCSV();
+          } else if (action === 'categories') {
+            if (typeof window.renderCategoryManageList === 'function') window.renderCategoryManageList();
+            var el = document.getElementById('categoryManageModalOverlay');
+            if (el) { el.style.display = 'flex'; el.classList.add('active'); }
+          } else if (action === 'export_json') {
+            if (typeof window.exportDataToGDriveFile === 'function') window.exportDataToGDriveFile();
+          } else if (action === 'import_json') {
+            var input = document.getElementById('importFileInput');
+            if (input) input.click();
+          } else if (action === 'autosync') {
+            if (typeof window.enableGoogleDriveAutoSync === 'function') window.enableGoogleDriveAutoSync();
+          } else if (action === 'reset_history') {
+            if (confirm('驕主悉繝・・繧ｿ蜈ｨ莉ｶ・・65莉ｶ・峨ｒ蜀阪Ο繝ｼ繝峨＠縺ｦ蠕ｩ蜈・＠縺ｾ縺吶°・・)) {
+              if (typeof window.reloadHistoricalData === 'function') {
+                window.reloadHistoricalData();
+              }
+            }
+          }
+        }, 50);
+      } catch(err) {
+        alert('繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: ' + err.message);
+      }
+    };
+  </script>
+
   <style>
     /* Trade Analytics Pro - Deep Dark Premium Theme */
     :root {
@@ -439,11 +510,11 @@
       background-color: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       z-index: 500;
-      display: none !important;
+      display: none;
       justify-content: center;
       align-items: center;
       opacity: 0;
-      pointer-events: none !important;
+      pointer-events: none;
     }
 
     .modal-overlay.active {
@@ -519,9 +590,9 @@
       background-color: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(4px);
       z-index: 600;
-      display: none !important;
+      display: none;
       opacity: 0;
-      pointer-events: none !important;
+      pointer-events: none;
     }
     
     .menu-backdrop.active {
@@ -689,7 +760,7 @@
     
     <header class="app-header">
       <div class="app-title">
-        <span>Trade</span>Analytics <span style="font-size:0.65rem; color:#10b981; font-weight:normal;">v3.0</span>
+        <span>Trade</span>Analytics
       </div>
       <div id="gdriveSyncBadge" class="sync-badge" title="Google Drive 蜷梧悄繧ｹ繝・・繧ｿ繧ｹ">
         <span class="sync-dot"></span>
@@ -987,7 +1058,6 @@
 ;
   </script>  <script>
     (function() {
-      // Safe Register for Chart.js Plugins
       try {
         if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
           Chart.register(ChartDataLabels);
@@ -1012,68 +1082,12 @@
       var categories = [];
       var currentDate = new Date(todayObj.getFullYear() || 2026, todayObj.getMonth() || 7, 1);
       var selectedDateStr = todayStr;
-      var analyticsChartInstance = null;
-      var isAutoSyncEnabled = false;
-      var activeTableGroup = 'category';
-      var activePeriodType = 'month';
-      var activeChartType = 'doughnut';
 
-      window.openDrawerMenu = function() {
-        var bd = document.getElementById('menuDrawerOverlay');
-        var dr = document.getElementById('menuDrawer');
-        if (bd) bd.classList.add('active');
-        if (dr) dr.classList.add('active');
-      };
-
-      window.closeDrawerMenu = function() {
-        var bd = document.getElementById('menuDrawerOverlay');
-        var dr = document.getElementById('menuDrawer');
-        if (bd) bd.classList.remove('active');
-        if (dr) dr.classList.remove('active');
-      };
-
-      window.closeAllModals = function() {
-        var overlays = document.querySelectorAll('.modal-overlay');
-        overlays.forEach(function(el) {
-          el.classList.remove('active');
-        });
-      };
-
-      window.handleMenuAction = function(action) {
-        window.closeDrawerMenu();
-        window.closeAllModals();
-
-        setTimeout(function() {
-          if (action === 'summary') {
-            var el = document.getElementById('summaryModalOverlay');
-            if (el) el.classList.add('active');
-            updatePeriodOptions();
-            renderAnalyticsDashboard();
-          } else if (action === 'excel_import') {
-            var el = document.getElementById('excelImportModalOverlay');
-            if (el) el.classList.add('active');
-          } else if (action === 'export_csv') {
-            exportDataToCSV();
-          } else if (action === 'categories') {
-            renderCategoryManageList();
-            var el = document.getElementById('categoryManageModalOverlay');
-            if (el) el.classList.add('active');
-          } else if (action === 'export_json') {
-            exportDataToGDriveFile();
-          } else if (action === 'import_json') {
-            var input = document.getElementById('importFileInput');
-            if (input) input.click();
-          } else if (action === 'autosync') {
-            enableGoogleDriveAutoSync();
-          } else if (action === 'reset_history') {
-            if (confirm('驕主悉繝・・繧ｿ蜈ｨ莉ｶ・・65莉ｶ・峨ｒ蜀阪Ο繝ｼ繝峨＠縺ｦ蠕ｩ蜈・＠縺ｾ縺吶°・・)) {
-              trades = window.EMBEDDED_HISTORICAL_TRADES ? window.EMBEDDED_HISTORICAL_TRADES.slice() : [];
-              saveTrades();
-              renderApp();
-              alert('驕主悉繝・・繧ｿ蜈ｨ965莉ｶ縺ｮ繝ｭ繝ｼ繝峨′螳御ｺ・＠縺ｾ縺励◆・・);
-            }
-          }
-        }, 100);
+      window.reloadHistoricalData = function() {
+        trades = window.EMBEDDED_HISTORICAL_TRADES ? window.EMBEDDED_HISTORICAL_TRADES.slice() : [];
+        saveTrades();
+        renderApp();
+        alert('驕主悉繝・・繧ｿ蜈ｨ965莉ｶ縺ｮ繝ｭ繝ｼ繝峨′螳御ｺ・＠縺ｾ縺励◆・・);
       };
 
       function getCategoryColor(catName) {
