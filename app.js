@@ -1,9 +1,11 @@
 // Trade Analytics Pro - Core Engine & UI Handler
 
-// Register Chart.js DataLabels plugin if available
-if (typeof ChartDataLabels !== 'undefined') {
-  try { Chart.register(ChartDataLabels); } catch(e){}
-}
+// Safe Register for Chart.js Plugins
+try {
+  if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+  }
+} catch (e) {}
 
 // Storage Keys
 const STORAGE_KEY = 'trade_analytics_data_v2';
@@ -15,13 +17,15 @@ const DEFAULT_CATEGORIES = ['FXデイトレ', 'FXスキャル', 'FXスイング'
 
 // Initial Imported User Data Function
 function getInitialDummyData() {
-  if (window.userImportedData && window.userImportedData.trades && Array.isArray(window.userImportedData.trades)) {
-    return window.userImportedData.trades;
-  }
+  try {
+    if (window.userImportedData && window.userImportedData.trades && Array.isArray(window.userImportedData.trades)) {
+      return window.userImportedData.trades;
+    }
+  } catch(e){}
   return [];
 }
 
-// Safe Today Initializer (Defaults to current today / month / year)
+// Today Initializer
 const todayObj = new Date();
 const currentYearStr = String(todayObj.getFullYear() || 2026);
 const currentMonthNum = (todayObj.getMonth() !== undefined) ? todayObj.getMonth() + 1 : 8;
@@ -68,23 +72,48 @@ function getTradeProfitLoss(t) {
   return { profit, loss, netPnl: profit - loss };
 }
 
-// Guaranteed App Initializer
+// Guaranteed Safe App Initializer
 function initApp() {
   try {
     loadCategories();
     loadTrades();
     checkAutoSyncState();
     setupEventListeners();
+    updateHistoryDatalists();
     renderApp();
   } catch (e) {
     console.error("App Initialization error:", e);
   }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(initApp, 0);
 } else {
-  initApp();
+  document.addEventListener('DOMContentLoaded', initApp);
+}
+
+// Populate Datalists from Trade History (Past Items & Memos)
+function updateHistoryDatalists() {
+  try {
+    const itemsList = document.getElementById('suggestedItemsList');
+    const memosList = document.getElementById('suggestedMemosList');
+
+    if (itemsList) {
+      itemsList.innerHTML = '';
+      const uniqueItems = [...new Set(trades.filter(t => t && t.item).map(t => t.item.trim()))];
+      uniqueItems.forEach(item => {
+        if (item) itemsList.appendChild(new Option(item, item));
+      });
+    }
+
+    if (memosList) {
+      memosList.innerHTML = '';
+      const uniqueMemos = [...new Set(trades.filter(t => t && t.memo).map(t => t.memo.trim()))];
+      uniqueMemos.forEach(memo => {
+        if (memo) memosList.appendChild(new Option(memo, memo));
+      });
+    }
+  } catch(e){}
 }
 
 // Load & Save Master Categories
@@ -164,6 +193,7 @@ function saveTrades() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
   } catch(e){}
+  updateHistoryDatalists();
   if (isAutoSyncEnabled) {
     autoSyncToGoogleDrive();
   }
@@ -257,22 +287,21 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevMonthDays = new Date(year, month, 0).getDate();
   
-  // Render previous month padding days
   for (let i = firstDay - 1; i >= 0; i--) {
     const dayNum = prevMonthDays - i;
     daysGrid.appendChild(createDayCell(dayNum, true));
   }
 
-  // Filter valid trades for the month
   const monthTrades = {};
-  trades.forEach(t => {
-    if (t && t.date) {
-      monthTrades[t.date] = monthTrades[t.date] || [];
-      monthTrades[t.date].push(t);
-    }
-  });
+  if (Array.isArray(trades)) {
+    trades.forEach(t => {
+      if (t && t.date) {
+        monthTrades[t.date] = monthTrades[t.date] || [];
+        monthTrades[t.date].push(t);
+      }
+    });
+  }
 
-  // Render current month days (1..daysInMonth)
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const dayTrades = monthTrades[dateStr] || [];
@@ -311,7 +340,6 @@ function renderCalendar() {
     daysGrid.appendChild(cell);
   }
 
-  // Render next month padding days
   const totalCells = daysGrid.children.length;
   const remaining = (7 - (totalCells % 7)) % 7;
   for (let i = 1; i <= remaining; i++) {
@@ -387,6 +415,18 @@ function renderSelectedDayDetails() {
 
     let itemsHtml = '';
     group.items.forEach(item => {
+      // Clean single display for profit / loss without redundant double text
+      let pnlDisplayHtml = '';
+      if (item.profit > 0 && item.loss > 0) {
+        pnlDisplayHtml = `<span style="color:var(--color-win);">利益: ¥${item.profit.toLocaleString()}</span> / <span style="color:var(--color-loss);">損失: ¥${item.loss.toLocaleString()}</span>`;
+      } else if (item.profit > 0) {
+        pnlDisplayHtml = `<span style="color:var(--color-win); font-weight:700;">利益: ¥${item.profit.toLocaleString()}</span>`;
+      } else if (item.loss > 0) {
+        pnlDisplayHtml = `<span style="color:var(--color-loss); font-weight:700;">損失: ¥${item.loss.toLocaleString()}</span>`;
+      } else {
+        pnlDisplayHtml = `<span style="color:var(--text-muted); font-weight:700;">¥0</span>`;
+      }
+
       itemsHtml += `
         <div class="trade-item-sub">
           <div>
@@ -394,12 +434,7 @@ function renderSelectedDayDetails() {
             <span class="trade-memo">${item.memo ? `(${item.memo})` : ''}</span>
           </div>
           <div>
-            ${item.profit > 0 ? `<span style="color:var(--color-win);">利益: ¥${item.profit.toLocaleString()}</span>` : ''}
-            ${item.profit > 0 && item.loss > 0 ? ' / ' : ''}
-            ${item.loss > 0 ? `<span style="color:var(--color-loss);">損失: ¥${item.loss.toLocaleString()}</span>` : ''}
-            <span style="font-weight:bold; margin-left:6px; color:${item.netPnl >= 0 ? 'var(--color-win)' : 'var(--color-loss)'}">
-              ${formatJPY(item.netPnl)}
-            </span>
+            ${pnlDisplayHtml}
             <button onclick="deleteTrade('${item.id}')" style="background:none; border:none; color:#ef4444; margin-left:8px; cursor:pointer;" title="削除">✕</button>
           </div>
         </div>
@@ -444,26 +479,28 @@ function renderFixedFooterSummary() {
   let yProfit = 0, yLoss = 0;
   let lProfit = 0, lLoss = 0;
 
-  trades.forEach(t => {
-    if (!t || !t.date) return;
-    const { profit, loss } = getTradeProfitLoss(t);
-    const dateParts = t.date.split('-');
-    const tY = dateParts[0];
-    const tMonthStr = `${tY}-${dateParts[1]}`;
+  if (Array.isArray(trades)) {
+    trades.forEach(t => {
+      if (!t || !t.date) return;
+      const { profit, loss } = getTradeProfitLoss(t);
+      const dateParts = t.date.split('-');
+      const tY = dateParts[0];
+      const tMonthStr = `${tY}-${dateParts[1]}`;
 
-    lProfit += profit;
-    lLoss += loss;
+      lProfit += profit;
+      lLoss += loss;
 
-    if (tY === currYearStr) {
-      yProfit += profit;
-      yLoss += loss;
-    }
+      if (tY === currYearStr) {
+        yProfit += profit;
+        yLoss += loss;
+      }
 
-    if (tMonthStr === currMonthStr) {
-      mProfit += profit;
-      mLoss += loss;
-    }
-  });
+      if (tMonthStr === currMonthStr) {
+        mProfit += profit;
+        mLoss += loss;
+      }
+    });
+  }
 
   const mPnl = mProfit - mLoss;
   const yPnl = yProfit - yLoss;
@@ -676,6 +713,7 @@ function renderAnalyticsDashboard() {
 function renderAnalyticsChart(filteredTrades, startVal, endVal) {
   const canvas = document.getElementById('analyticsChart');
   if (!canvas) return;
+  if (typeof Chart === 'undefined') return;
   const ctx = canvas.getContext('2d');
   
   if (analyticsChartInstance) analyticsChartInstance.destroy();
@@ -843,7 +881,7 @@ function renderAnalyticsChart(filteredTrades, startVal, endVal) {
   }
 }
 
-// Render Performance Table dynamically based on activeTableGroup ('category' | 'item' | 'memo' | 'month')
+// Render Performance Table
 function renderPerformanceTables(filteredTrades) {
   const headerRow = document.getElementById('performanceTableHeaderRow');
   const tbody = document.getElementById('performanceTableBody');
@@ -967,7 +1005,6 @@ function renderPerformanceTables(filteredTrades) {
    6. Excel (.xlsx) Import & Sample Template Generation
    ========================================================= */
 
-// Download Sample Excel Template (.xlsx)
 function downloadSampleExcelTemplate() {
   if (typeof XLSX === 'undefined') {
     alert('Excelライブラリの読み込み中です。少々お待ちください。');
@@ -988,7 +1025,6 @@ function downloadSampleExcelTemplate() {
   XLSX.writeFile(wb, 'trade_record_template.xlsx');
 }
 
-// Parse & Import Excel File (.xlsx / .xls)
 function parseAndImportExcelFile(file) {
   if (!file) {
     alert('Excelファイルを選択してください。');
@@ -1049,10 +1085,8 @@ function parseAndImportExcelFile(file) {
         newCategoriesSet.add(category);
 
         const item = row[2] ? String(row[2]).trim() : category;
-
         const profit = Math.abs(Number(row[3])) || 0;
         const loss = Math.abs(Number(row[4])) || 0;
-
         const memo = row[5] ? String(row[5]).trim() : '';
 
         importedTrades.push({
@@ -1104,7 +1138,6 @@ function parseAndImportExcelFile(file) {
    7. Export Handlers (CSV & JSON)
    ========================================================= */
 
-// CSV Export (Excel Compatible UTF-8 with BOM)
 function exportDataToCSV() {
   if (trades.length === 0) {
     alert('エクスポートするトレードデータがありません。');
@@ -1139,7 +1172,6 @@ function exportDataToCSV() {
   URL.revokeObjectURL(url);
 }
 
-// JSON Backup Export
 function exportDataToGDriveFile() {
   const dataStr = JSON.stringify(trades, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
@@ -1188,7 +1220,7 @@ function handleImportFileSelect(e) {
 }
 
 /* =========================================================
-   8. Event Listeners Setup (Null-safe Registration)
+   8. Event Listeners Setup
    ========================================================= */
 function setupEventListeners() {
   const addEvt = (id, event, fn) => {
@@ -1393,18 +1425,28 @@ function setupEventListeners() {
     });
   });
 
+  const handleZeroBlankFocus = function() {
+    if (this.value === '0' || this.value === 0) {
+      this.value = '';
+    }
+  };
+
+  addEvt('tradeProfitInput', 'focus', handleZeroBlankFocus);
+  addEvt('tradeLossInput', 'focus', handleZeroBlankFocus);
+
   const addModal = document.getElementById('addTradeModalOverlay');
   addEvt('openAddTradeBtn', 'click', () => {
     const dInput = document.getElementById('tradeDateInput');
     if (dInput) dInput.value = selectedDateStr;
     const pInput = document.getElementById('tradeProfitInput');
-    if (pInput) pInput.value = 0;
+    if (pInput) pInput.value = '';
     const lInput = document.getElementById('tradeLossInput');
-    if (lInput) lInput.value = 0;
+    if (lInput) lInput.value = '';
     if (customCatInput) {
       customCatInput.style.display = 'none';
       customCatInput.required = false;
     }
+    updateHistoryDatalists();
     if (addModal) addModal.classList.add('active');
   });
 
@@ -1433,7 +1475,10 @@ function setupEventListeners() {
       }
 
       const itemInput = document.getElementById('tradeItemInput');
-      const item = itemInput ? itemInput.value.trim() : category;
+      let item = itemInput ? itemInput.value.trim() : '';
+      if (!item) {
+        item = category;
+      }
 
       const pInput = document.getElementById('tradeProfitInput');
       const profit = pInput ? (Number(pInput.value) || 0) : 0;

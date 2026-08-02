@@ -64,7 +64,6 @@
       overflow-x: hidden;
     }
 
-    /* App Container (Mobile Frame Constraint) */
     .app-container {
       width: 100%;
       max-width: 480px;
@@ -77,7 +76,6 @@
       padding-bottom: 90px;
     }
 
-    /* Header */
     .app-header {
       height: 56px;
       background-color: var(--bg-card);
@@ -159,7 +157,6 @@
       background-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* Top Half: Calendar Container */
     .calendar-section {
       background-color: var(--bg-secondary);
       padding: 12px;
@@ -270,7 +267,6 @@
     }
     .day-cell.loss .day-amount { color: var(--color-loss); }
 
-    /* Bottom Half: Details Container */
     .details-section {
       flex: 1;
       padding: 16px;
@@ -393,7 +389,6 @@
       box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
     }
 
-    /* Fixed Summary Footer */
     .fixed-summary-footer {
       position: fixed;
       bottom: 0;
@@ -448,7 +443,6 @@
     .summary-pnl.win { color: var(--color-win); }
     .summary-pnl.loss { color: var(--color-loss); }
 
-    /* Modals & Overlay */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -528,7 +522,6 @@
       gap: 10px;
     }
 
-    /* Drawer Menu */
     .menu-drawer {
       position: fixed;
       top: 0;
@@ -580,7 +573,6 @@
       background-color: var(--bg-card-hover);
     }
 
-    /* Summary Modal Specifics */
     .summary-controls {
       display: flex;
       flex-direction: column;
@@ -640,7 +632,6 @@
       height: 100%;
     }
 
-    /* Data Table */
     .data-table-container {
       margin-top: 12px;
       background-color: var(--bg-card);
@@ -951,25 +942,30 @@
             <input type="text" class="form-input" id="customCategoryInput" placeholder="新しい大項目を入力" style="display:none; margin-top:6px;">
           </div>
 
+          <!-- Small Item with Autocomplete Suggestion (OPTIONAL) -->
           <div class="form-group">
             <label class="form-label">小項目 (銘柄 / 通貨ペア)</label>
-            <input type="text" class="form-input" id="tradeItemInput" placeholder="例: USD/JPY, 日経225" required>
+            <input type="text" class="form-input" id="tradeItemInput" placeholder="例: USD/JPY, 金 (XAUUSD) ※未入力可" list="suggestedItemsList">
+            <datalist id="suggestedItemsList"></datalist>
           </div>
 
+          <!-- Profit / Loss Inputs with Auto Blanking on Click -->
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" style="color:var(--color-win);">利益額 (￥)</label>
-              <input type="number" class="form-input" id="tradeProfitInput" placeholder="0" min="0" value="0" required>
+              <input type="number" class="form-input" id="tradeProfitInput" placeholder="0" min="0">
             </div>
             <div class="form-group">
               <label class="form-label" style="color:var(--color-loss);">損失額 (￥)</label>
-              <input type="number" class="form-input" id="tradeLossInput" placeholder="0" min="0" value="0" required>
+              <input type="number" class="form-input" id="tradeLossInput" placeholder="0" min="0">
             </div>
           </div>
 
+          <!-- Memo Input with History Suggestion -->
           <div class="form-group">
             <label class="form-label">メモ (根拠・反省点など)</label>
-            <input type="text" class="form-input" id="tradeMemoInput" placeholder="押し目買いなど">
+            <input type="text" class="form-input" id="tradeMemoInput" placeholder="押し目買い, ロンドンブレイクなど" list="suggestedMemosList">
+            <datalist id="suggestedMemosList"></datalist>
           </div>
 
           <button type="submit" class="add-trade-btn" style="margin-top:10px;">
@@ -980,380 +976,7 @@
     </div>
   </div>
 
-  <!-- ALL LOGIC EMBEDDED DIRECTLY IN INDEX.HTML FOR 100% RELIABILITY -->
-  <script>
-    // Inline Trade History Data
-    window.userImportedData = (function() {
-      var defaultCats = ['FXデイトレ', 'FXスキャル', 'FXスイング', 'CFD', '株指数', '商品', '自動売買'];
-      return { trades: [], categories: defaultCats };
-    })();
-
-    // Application Engine
-    (function() {
-      var STORAGE_KEY = 'trade_analytics_data_v2';
-      var CATEGORIES_KEY = 'trade_analytics_categories_v2';
-      var AUTO_SYNC_KEY = 'trade_gdrive_auto_sync_enabled';
-
-      var DEFAULT_CATEGORIES = ['FXデイトレ', 'FXスキャル', 'FXスイング', 'CFD', '株指数', '商品', '自動売買'];
-      var COLOR_PALETTE = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f59e0b', '#10b981', '#ec4899', '#f97316', '#6366f1', '#14b8a6', '#a855f7'];
-
-      var todayObj = new Date();
-      var currentYearStr = String(todayObj.getFullYear() || 2026);
-      var currentMonthNum = (todayObj.getMonth() !== undefined) ? todayObj.getMonth() + 1 : 8;
-      var currentMonthStr = currentYearStr + '-' + String(currentMonthNum).padStart(2, '0');
-      var todayNum = todayObj.getDate() || 3;
-      var todayStr = currentMonthStr + '-' + String(todayNum).padStart(2, '0');
-
-      var trades = [];
-      var categories = [];
-      var currentDate = new Date(todayObj.getFullYear() || 2026, todayObj.getMonth() || 7, 1);
-      var selectedDateStr = todayStr;
-      var analyticsChartInstance = null;
-      var isAutoSyncEnabled = false;
-      var activeTableGroup = 'category';
-      var activePeriodType = 'month';
-      var activeChartType = 'doughnut';
-
-      function getCategoryColor(catName) {
-        var idx = categories.indexOf(catName);
-        return idx >= 0 ? COLOR_PALETTE[idx % COLOR_PALETTE.length] : '#06b6d4';
-      }
-
-      function getTradeProfitLoss(t) {
-        if (!t) return { profit: 0, loss: 0, netPnl: 0 };
-        var profit = t.profit !== undefined ? Number(t.profit) : 0;
-        var loss = t.loss !== undefined ? Number(t.loss) : 0;
-        if (isNaN(profit)) profit = 0;
-        if (isNaN(loss)) loss = 0;
-        return { profit: profit, loss: loss, netPnl: profit - loss };
-      }
-
-      function formatJPY(amount) {
-        if (isNaN(amount)) amount = 0;
-        var sign = amount > 0 ? '+¥' : amount < 0 ? '-¥' : '¥';
-        return sign + Math.abs(amount).toLocaleString();
-      }
-
-      function loadCategories() {
-        try {
-          var stored = localStorage.getItem(CATEGORIES_KEY);
-          if (stored) {
-            categories = JSON.parse(stored);
-          } else {
-            categories = DEFAULT_CATEGORIES.slice();
-          }
-        } catch(e) {
-          categories = DEFAULT_CATEGORIES.slice();
-        }
-        updateCategoryDropdowns();
-      }
-
-      function saveCategories() {
-        try { localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories)); } catch(e){}
-        updateCategoryDropdowns();
-      }
-
-      function updateCategoryDropdowns() {
-        var select = document.getElementById('tradeCategorySelect');
-        if (!select) return;
-        select.innerHTML = '';
-        categories.forEach(function(cat) {
-          if (cat) select.appendChild(new Option(cat, cat));
-        });
-        select.appendChild(new Option('＋ 新しい大項目を追加...', '__NEW__'));
-      }
-
-      function loadTrades() {
-        try {
-          var data = localStorage.getItem(STORAGE_KEY);
-          if (data) {
-            trades = JSON.parse(data);
-          } else {
-            trades = [];
-          }
-        } catch(e) {
-          trades = [];
-        }
-      }
-
-      function saveTrades() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(trades)); } catch(e){}
-      }
-
-      function renderApp() {
-        renderCalendar();
-        renderSelectedDayDetails();
-        renderFixedFooterSummary();
-      }
-
-      function renderCalendar() {
-        var year = currentDate.getFullYear();
-        var month = currentDate.getMonth();
-        
-        var monthLabel = document.getElementById('calendarMonthLabel');
-        if (monthLabel) monthLabel.textContent = year + '年 ' + (month + 1) + '月';
-        
-        var daysGrid = document.getElementById('daysGrid');
-        if (!daysGrid) return;
-        daysGrid.innerHTML = '';
-        
-        var firstDay = new Date(year, month, 1).getDay();
-        var daysInMonth = new Date(year, month + 1, 0).getDate();
-        var prevMonthDays = new Date(year, month, 0).getDate();
-        
-        for (var i = firstDay - 1; i >= 0; i--) {
-          var dayNum = prevMonthDays - i;
-          daysGrid.appendChild(createDayCell(dayNum, true));
-        }
-
-        var monthTrades = {};
-        trades.forEach(function(t) {
-          if (t && t.date) {
-            monthTrades[t.date] = monthTrades[t.date] || [];
-            monthTrades[t.date].push(t);
-          }
-        });
-
-        for (var d = 1; d <= daysInMonth; d++) {
-          var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-          var dayTrades = monthTrades[dateStr] || [];
-          
-          var netPnl = 0;
-          var count = dayTrades.length;
-          dayTrades.forEach(function(t) {
-            var res = getTradeProfitLoss(t);
-            netPnl += res.netPnl;
-          });
-
-          var dayOfWeek = new Date(year, month, d).getDay();
-          var cell = document.createElement('div');
-          cell.className = 'day-cell';
-          
-          if (dayOfWeek === 0) cell.classList.add('sun');
-          if (dayOfWeek === 6) cell.classList.add('sat');
-          if (dateStr === selectedDateStr) cell.classList.add('selected');
-
-          if (count > 0) {
-            if (netPnl > 0) cell.classList.add('win');
-            else if (netPnl < 0) cell.classList.add('loss');
-          }
-
-          cell.innerHTML = '<div class="day-number">' + d + '</div>' +
-            (count > 0 ? '<div class="day-badge">📄' + count + '</div>' : '') +
-            (count > 0 ? '<div class="day-amount">' + (netPnl >= 0 ? netPnl.toLocaleString() : netPnl.toLocaleString()) + '</div>' : '');
-
-          (function(ds) {
-            cell.addEventListener('click', function() {
-              selectedDateStr = ds;
-              renderApp();
-            });
-          })(dateStr);
-
-          daysGrid.appendChild(cell);
-        }
-
-        var totalCells = daysGrid.children.length;
-        var remaining = (7 - (totalCells % 7)) % 7;
-        for (var k = 1; k <= remaining; k++) {
-          daysGrid.appendChild(createDayCell(k, true));
-        }
-      }
-
-      function createDayCell(dayNum, isOtherMonth) {
-        var cell = document.createElement('div');
-        cell.className = 'day-cell' + (isOtherMonth ? ' other-month' : '');
-        cell.innerHTML = '<div class="day-number">' + dayNum + '</div>';
-        return cell;
-      }
-
-      function renderSelectedDayDetails() {
-        if (!selectedDateStr) selectedDateStr = todayStr;
-        var parts = selectedDateStr.split('-').map(Number);
-        var y = parts[0], m = parts[1], d = parts[2];
-        var dateObj = new Date(y, m - 1, d);
-        var dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-        
-        var titleEl = document.getElementById('selectedDateTitle');
-        if (titleEl) titleEl.textContent = y + '/' + String(m).padStart(2,'0') + '/' + String(d).padStart(2,'0') + ' (' + dayNames[dateObj.getDay()] + ') の損益明細';
-
-        var dayTrades = trades.filter(function(t) { return t && t.date === selectedDateStr; });
-        var categoryListEl = document.getElementById('categoryList');
-        if (!categoryListEl) return;
-        categoryListEl.innerHTML = '';
-
-        var dayTotalPnl = 0;
-
-        if (dayTrades.length === 0) {
-          categoryListEl.innerHTML = '<div class="empty-state">この日のトレード記録はありません。<br>「＋ トレード結果を追加」から記録を入力できます。</div>';
-          var pill = document.getElementById('dayPnlPill');
-          if (pill) { pill.textContent = '¥0'; pill.className = 'pill'; }
-          return;
-        }
-
-        var catGroups = {};
-        dayTrades.forEach(function(t) {
-          var res = getTradeProfitLoss(t);
-          dayTotalPnl += res.netPnl;
-          var catName = t.category || 'FXデイトレ';
-          catGroups[catName] = catGroups[catName] || { pnl: 0, items: [] };
-          catGroups[catName].pnl += res.netPnl;
-          catGroups[catName].items.push({ id: t.id, item: t.item, memo: t.memo, profit: res.profit, loss: res.loss, netPnl: res.netPnl });
-        });
-
-        var pill = document.getElementById('dayPnlPill');
-        if (pill) {
-          pill.textContent = formatJPY(dayTotalPnl);
-          pill.className = 'pill ' + (dayTotalPnl >= 0 ? 'win' : 'loss');
-        }
-
-        Object.keys(catGroups).forEach(function(catName) {
-          var group = catGroups[catName];
-          var catColor = getCategoryColor(catName);
-          var card = document.createElement('div');
-          card.className = 'category-card';
-
-          var itemsHtml = '';
-          group.items.forEach(function(item) {
-            itemsHtml += '<div class="trade-item-sub"><div><strong>' + (item.item || catName) + '</strong> <span class="trade-memo">' + (item.memo ? '('+item.memo+')' : '') + '</span></div><div>' +
-              (item.profit > 0 ? '<span style="color:var(--color-win);">利益: ¥' + item.profit.toLocaleString() + '</span>' : '') +
-              (item.profit > 0 && item.loss > 0 ? ' / ' : '') +
-              (item.loss > 0 ? '<span style="color:var(--color-loss);">損失: ¥' + item.loss.toLocaleString() + '</span>' : '') +
-              '<span style="font-weight:bold; margin-left:6px; color:' + (item.netPnl >= 0 ? 'var(--color-win)' : 'var(--color-loss)') + '">' + formatJPY(item.netPnl) + '</span>' +
-              '<button onclick="window.deleteTradeItem(\'' + item.id + '\')" style="background:none; border:none; color:#ef4444; margin-left:8px; cursor:pointer;">✕</button></div></div>';
-          });
-
-          card.innerHTML = '<div class="category-header"><div class="category-name-badge"><span class="cat-dot" style="background-color:' + catColor + ';"></span>' + catName + '</div><div class="category-pnl ' + (group.pnl >= 0 ? 'win' : 'loss') + '">' + formatJPY(group.pnl) + '</div></div>' + itemsHtml;
-          categoryListEl.appendChild(card);
-        });
-      }
-
-      window.deleteTradeItem = function(id) {
-        if (confirm('このトレード記録を削除しますか？')) {
-          trades = trades.filter(function(t) { return t.id !== id; });
-          saveTrades();
-          renderApp();
-        }
-      };
-
-      function renderFixedFooterSummary() {
-        var currY = currentDate.getFullYear();
-        var currM = currentDate.getMonth() + 1;
-        var currYearStr = String(currY);
-        var currMonthStr = currYearStr + '-' + String(currM).padStart(2, '0');
-
-        var mProfit = 0, mLoss = 0, yProfit = 0, yLoss = 0, lProfit = 0, lLoss = 0;
-
-        trades.forEach(function(t) {
-          if (!t || !t.date) return;
-          var res = getTradeProfitLoss(t);
-          var parts = t.date.split('-');
-          var tY = parts[0];
-          var tMonthStr = tY + '-' + parts[1];
-
-          lProfit += res.profit; lLoss += res.loss;
-          if (tY === currYearStr) { yProfit += res.profit; yLoss += res.loss; }
-          if (tMonthStr === currMonthStr) { mProfit += res.profit; mLoss += res.loss; }
-        });
-
-        var mPnl = mProfit - mLoss, yPnl = yProfit - yLoss, lPnl = lProfit - lLoss;
-
-        var el;
-        if (el = document.getElementById('footerMonthProfit')) el.textContent = '¥' + mProfit.toLocaleString();
-        if (el = document.getElementById('footerMonthLoss')) el.textContent = '¥' + mLoss.toLocaleString();
-        if (el = document.getElementById('footerMonthPnl')) { el.textContent = formatJPY(mPnl); el.className = 'summary-pnl ' + (mPnl>=0?'win':'loss'); }
-
-        if (el = document.getElementById('footerYearProfit')) el.textContent = '¥' + yProfit.toLocaleString();
-        if (el = document.getElementById('footerYearLoss')) el.textContent = '¥' + yLoss.toLocaleString();
-        if (el = document.getElementById('footerYearPnl')) { el.textContent = formatJPY(yPnl); el.className = 'summary-pnl ' + (yPnl>=0?'win':'loss'); }
-
-        if (el = document.getElementById('footerLifeProfit')) el.textContent = '¥' + lProfit.toLocaleString();
-        if (el = document.getElementById('footerLifeLoss')) el.textContent = '¥' + lLoss.toLocaleString();
-        if (el = document.getElementById('footerLifePnl')) { el.textContent = formatJPY(lPnl); el.className = 'summary-pnl ' + (lPnl>=0?'win':'loss'); }
-      }
-
-      function setupEventListeners() {
-        var addEvt = function(id, evt, fn) {
-          var el = document.getElementById(id);
-          if (el) el.addEventListener(evt, fn);
-        };
-
-        addEvt('prevMonthBtn', 'click', function() {
-          currentDate.setMonth(currentDate.getMonth() - 1);
-          renderApp();
-        });
-
-        addEvt('nextMonthBtn', 'click', function() {
-          currentDate.setMonth(currentDate.getMonth() + 1);
-          renderApp();
-        });
-
-        addEvt('todayBtn', 'click', function() {
-          currentDate = new Date();
-          selectedDateStr = currentDate.getFullYear() + '-' + String(currentDate.getMonth()+1).padStart(2,'0') + '-' + String(currentDate.getDate()).padStart(2,'0');
-          renderApp();
-        });
-
-        var drawerOverlay = document.getElementById('menuDrawerOverlay');
-        var drawer = document.getElementById('menuDrawer');
-        var closeMenu = function() {
-          if (drawerOverlay) drawerOverlay.classList.remove('active');
-          if (drawer) drawer.classList.remove('active');
-        };
-
-        addEvt('openMenuBtn', 'click', function() {
-          if (drawerOverlay) drawerOverlay.classList.add('active');
-          if (drawer) drawer.classList.add('active');
-        });
-
-        addEvt('closeMenuBtn', 'click', closeMenu);
-
-        var addModal = document.getElementById('addTradeModalOverlay');
-        addEvt('openAddTradeBtn', 'click', function() {
-          var dInput = document.getElementById('tradeDateInput');
-          if (dInput) dInput.value = selectedDateStr;
-          if (addModal) addModal.classList.add('active');
-        });
-
-        addEvt('closeTradeModalBtn', 'click', function() {
-          if (addModal) addModal.classList.remove('active');
-        });
-
-        var form = document.getElementById('tradeForm');
-        if (form) {
-          form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            var date = document.getElementById('tradeDateInput').value;
-            var category = document.getElementById('tradeCategorySelect').value;
-            var item = document.getElementById('tradeItemInput').value.trim() || category;
-            var profit = Number(document.getElementById('tradeProfitInput').value) || 0;
-            var loss = Number(document.getElementById('tradeLossInput').value) || 0;
-            var memo = document.getElementById('tradeMemoInput').value.trim();
-
-            trades.push({
-              id: Date.now().toString(),
-              date: date,
-              category: category,
-              item: item,
-              profit: profit,
-              loss: loss,
-              memo: memo
-            });
-
-            saveTrades();
-            if (addModal) addModal.classList.remove('active');
-            form.reset();
-            selectedDateStr = date;
-            renderApp();
-          });
-        }
-      }
-
-      // Initialize App
-      loadCategories();
-      loadTrades();
-      setupEventListeners();
-      renderApp();
-    })();
-  </script>
+  <script src="convert_user_history.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
