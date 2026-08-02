@@ -2,7 +2,7 @@
 
 // Register Chart.js DataLabels plugin if available
 if (typeof ChartDataLabels !== 'undefined') {
-  Chart.register(ChartDataLabels);
+  try { Chart.register(ChartDataLabels); } catch(e){}
 }
 
 // Storage Keys
@@ -15,23 +15,25 @@ const DEFAULT_CATEGORIES = ['FXデイトレ', 'FXスキャル', 'FXスイング'
 
 // Initial Imported User Data Function
 function getInitialDummyData() {
-  if (window.userImportedData && window.userImportedData.trades && window.userImportedData.trades.length > 0) {
+  if (window.userImportedData && window.userImportedData.trades && Array.isArray(window.userImportedData.trades)) {
     return window.userImportedData.trades;
   }
   return [];
 }
 
-// Today Initializer (Defaults to current today / month / year)
+// Safe Today Initializer (Defaults to current today / month / year)
 const todayObj = new Date();
-const currentYearStr = String(todayObj.getFullYear());
-const currentMonthStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}`;
-const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+const currentYearStr = String(todayObj.getFullYear() || 2026);
+const currentMonthNum = (todayObj.getMonth() !== undefined) ? todayObj.getMonth() + 1 : 8;
+const currentMonthStr = `${currentYearStr}-${String(currentMonthNum).padStart(2, '0')}`;
+const todayNum = todayObj.getDate() || 3;
+const todayStr = `${currentMonthStr}-${String(todayNum).padStart(2, '0')}`;
 
 // App State
 let trades = [];
 let categories = [];
-let currentDate = new Date(todayObj.getFullYear(), todayObj.getMonth(), 1); // Defaults to current Month
-let selectedDateStr = todayStr; // Defaults to today
+let currentDate = new Date(todayObj.getFullYear() || 2026, todayObj.getMonth() || 7, 1);
+let selectedDateStr = todayStr;
 let analyticsChartInstance = null;
 let isAutoSyncEnabled = false;
 
@@ -46,15 +48,21 @@ function getCategoryColor(catName) {
   return idx >= 0 ? COLOR_PALETTE[idx % COLOR_PALETTE.length] : '#06b6d4';
 }
 
-// Helper: Normalize trade object
+// Helper: Safe Profit & Loss Normalizer
 function getTradeProfitLoss(t) {
+  if (!t) return { profit: 0, loss: 0, netPnl: 0 };
   let profit = t.profit !== undefined ? Number(t.profit) : 0;
   let loss = t.loss !== undefined ? Number(t.loss) : 0;
 
+  if (isNaN(profit)) profit = 0;
+  if (isNaN(loss)) loss = 0;
+
   if (t.profit === undefined && t.investment !== undefined && t.recovery !== undefined) {
     const diff = Number(t.recovery) - Number(t.investment);
-    if (diff >= 0) { profit = diff; loss = 0; }
-    else { profit = 0; loss = Math.abs(diff); }
+    if (!isNaN(diff)) {
+      if (diff >= 0) { profit = diff; loss = 0; }
+      else { profit = 0; loss = Math.abs(diff); }
+    }
   }
 
   return { profit, loss, netPnl: profit - loss };
@@ -81,24 +89,34 @@ if (document.readyState === 'loading') {
 
 // Load & Save Master Categories
 function loadCategories() {
-  const storedCat = localStorage.getItem(CATEGORIES_KEY);
-  if (storedCat) {
-    categories = JSON.parse(storedCat);
-    categories = categories.map(c => c === '仮想通貨' ? '自動売買' : c);
-    categories = Array.from(new Set(categories));
-    saveCategories();
-  } else {
-    const importedCats = window.userImportedData ? window.userImportedData.categories : [];
-    categories = Array.from(new Set([...DEFAULT_CATEGORIES, ...importedCats]));
-    categories = categories.map(c => c === '仮想通貨' ? '自動売買' : c);
-    categories = Array.from(new Set(categories));
-    saveCategories();
+  try {
+    const storedCat = localStorage.getItem(CATEGORIES_KEY);
+    if (storedCat) {
+      categories = JSON.parse(storedCat);
+      if (Array.isArray(categories)) {
+        categories = categories.map(c => c === '仮想通貨' ? '自動売買' : c);
+        categories = Array.from(new Set(categories));
+      } else {
+        categories = [...DEFAULT_CATEGORIES];
+      }
+      saveCategories();
+    } else {
+      const importedCats = (window.userImportedData && Array.isArray(window.userImportedData.categories)) ? window.userImportedData.categories : [];
+      categories = Array.from(new Set([...DEFAULT_CATEGORIES, ...importedCats]));
+      categories = categories.map(c => c === '仮想通貨' ? '自動売買' : c);
+      categories = Array.from(new Set(categories));
+      saveCategories();
+    }
+  } catch(e) {
+    categories = [...DEFAULT_CATEGORIES];
   }
   updateCategoryDropdowns();
 }
 
 function saveCategories() {
-  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  try {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  } catch(e){}
   updateCategoryDropdowns();
 }
 
@@ -108,46 +126,60 @@ function updateCategoryDropdowns() {
   select.innerHTML = '';
 
   categories.forEach(cat => {
-    select.appendChild(new Option(cat, cat));
+    if (cat) select.appendChild(new Option(cat, cat));
   });
   select.appendChild(new Option('＋ 新しい大項目を追加...', '__NEW__'));
 }
 
 // Load & Save Trades
 function loadTrades() {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (data) {
-    trades = JSON.parse(data);
-    let migrated = false;
-    trades.forEach(t => {
-      if (t.category === '仮想通貨') {
-        t.category = '自動売買';
-        migrated = true;
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        trades = parsed.filter(t => t && typeof t === 'object' && t.date);
+        let migrated = false;
+        trades.forEach(t => {
+          if (t.category === '仮想通貨') {
+            t.category = '自動売買';
+            migrated = true;
+          }
+        });
+        if (migrated) saveTrades();
+      } else {
+        trades = getInitialDummyData();
+        saveTrades();
       }
-    });
-    if (migrated) saveTrades();
-  } else {
+    } else {
+      trades = getInitialDummyData();
+      saveTrades();
+    }
+  } catch(e) {
     trades = getInitialDummyData();
-    saveTrades();
   }
 }
 
 function saveTrades() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+  } catch(e){}
   if (isAutoSyncEnabled) {
     autoSyncToGoogleDrive();
   }
 }
 
 function checkAutoSyncState() {
-  const enabled = localStorage.getItem(AUTO_SYNC_KEY);
-  if (enabled === 'true') {
-    isAutoSyncEnabled = true;
-    updateSyncBadge('active', 'GDrive同期中');
-  } else {
-    isAutoSyncEnabled = false;
-    updateSyncBadge('inactive', 'ローカル');
-  }
+  try {
+    const enabled = localStorage.getItem(AUTO_SYNC_KEY);
+    if (enabled === 'true') {
+      isAutoSyncEnabled = true;
+      updateSyncBadge('active', 'GDrive同期中');
+    } else {
+      isAutoSyncEnabled = false;
+      updateSyncBadge('inactive', 'ローカル');
+    }
+  } catch(e){}
 }
 
 function updateSyncBadge(status, text) {
@@ -172,14 +204,14 @@ function autoSyncToGoogleDrive() {
 function enableGoogleDriveAutoSync() {
   if (!isAutoSyncEnabled) {
     isAutoSyncEnabled = true;
-    localStorage.setItem(AUTO_SYNC_KEY, 'true');
+    try { localStorage.setItem(AUTO_SYNC_KEY, 'true'); } catch(e){}
     updateSyncBadge('active', 'GDrive全自動同期ON');
     alert('【Google Drive 全自動同期が有効化されました】\n\n今後のトレード結果が自動的に Google Drive にリアルタイムで保存されます。');
     autoSyncToGoogleDrive();
   } else {
     if (confirm('Google Drive 全自動同期を解除してローカル保存のみにしますか？')) {
       isAutoSyncEnabled = false;
-      localStorage.setItem(AUTO_SYNC_KEY, 'false');
+      try { localStorage.setItem(AUTO_SYNC_KEY, 'false'); } catch(e){}
       updateSyncBadge('inactive', 'ローカル');
     }
   }
@@ -187,21 +219,30 @@ function enableGoogleDriveAutoSync() {
 
 // Helper: Format Currency
 function formatJPY(amount) {
+  if (isNaN(amount)) amount = 0;
   const sign = amount > 0 ? '+¥' : amount < 0 ? '-¥' : '¥';
   return `${sign}${Math.abs(amount).toLocaleString()}`;
 }
 
 // Render Master App State
 function renderApp() {
-  renderCalendar();
-  renderSelectedDayDetails();
-  renderFixedFooterSummary();
+  try {
+    renderCalendar();
+    renderSelectedDayDetails();
+    renderFixedFooterSummary();
+  } catch (e) {
+    console.error("Error in renderApp:", e);
+  }
 }
 
 /* =========================================================
    1. Calendar Render (Top Half)
    ========================================================= */
 function renderCalendar() {
+  if (!currentDate || isNaN(currentDate.getTime())) {
+    currentDate = new Date();
+  }
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   
@@ -216,17 +257,22 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevMonthDays = new Date(year, month, 0).getDate();
   
+  // Render previous month padding days
   for (let i = firstDay - 1; i >= 0; i--) {
     const dayNum = prevMonthDays - i;
     daysGrid.appendChild(createDayCell(dayNum, true));
   }
 
+  // Filter valid trades for the month
   const monthTrades = {};
   trades.forEach(t => {
-    monthTrades[t.date] = monthTrades[t.date] || [];
-    monthTrades[t.date].push(t);
+    if (t && t.date) {
+      monthTrades[t.date] = monthTrades[t.date] || [];
+      monthTrades[t.date].push(t);
+    }
   });
 
+  // Render current month days (1..daysInMonth)
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const dayTrades = monthTrades[dateStr] || [];
@@ -265,6 +311,7 @@ function renderCalendar() {
     daysGrid.appendChild(cell);
   }
 
+  // Render next month padding days
   const totalCells = daysGrid.children.length;
   const remaining = (7 - (totalCells % 7)) % 7;
   for (let i = 1; i <= remaining; i++) {
@@ -283,6 +330,9 @@ function createDayCell(dayNum, isOtherMonth) {
    2. Selected Day Category Details (Bottom Half)
    ========================================================= */
 function renderSelectedDayDetails() {
+  if (!selectedDateStr || !selectedDateStr.includes('-')) {
+    selectedDateStr = todayStr;
+  }
   const [y, m, d] = selectedDateStr.split('-').map(Number);
   const dateObj = new Date(y, m - 1, d);
   const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
@@ -290,7 +340,7 @@ function renderSelectedDayDetails() {
   const titleEl = document.getElementById('selectedDateTitle');
   if (titleEl) titleEl.textContent = `${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')} (${dayNames[dateObj.getDay()]}) の損益明細`;
 
-  const dayTrades = trades.filter(t => t.date === selectedDateStr);
+  const dayTrades = trades.filter(t => t && t.date === selectedDateStr);
   const categoryListEl = document.getElementById('categoryList');
   if (!categoryListEl) return;
   categoryListEl.innerHTML = '';
@@ -316,9 +366,10 @@ function renderSelectedDayDetails() {
     const { profit, loss, netPnl } = getTradeProfitLoss(t);
     dayTotalPnl += netPnl;
 
-    catGroups[t.category] = catGroups[t.category] || { pnl: 0, items: [] };
-    catGroups[t.category].pnl += netPnl;
-    catGroups[t.category].items.push({ ...t, profit, loss, netPnl });
+    const catName = t.category || 'FXデイトレ';
+    catGroups[catName] = catGroups[catName] || { pnl: 0, items: [] };
+    catGroups[catName].pnl += netPnl;
+    catGroups[catName].items.push({ ...t, profit, loss, netPnl });
   });
 
   const pill = document.getElementById('dayPnlPill');
@@ -339,7 +390,7 @@ function renderSelectedDayDetails() {
       itemsHtml += `
         <div class="trade-item-sub">
           <div>
-            <strong>${item.item}</strong> 
+            <strong>${item.item || catName}</strong> 
             <span class="trade-memo">${item.memo ? `(${item.memo})` : ''}</span>
           </div>
           <div>
@@ -394,9 +445,11 @@ function renderFixedFooterSummary() {
   let lProfit = 0, lLoss = 0;
 
   trades.forEach(t => {
+    if (!t || !t.date) return;
     const { profit, loss } = getTradeProfitLoss(t);
-    const [tY, tM] = t.date.split('-');
-    const tMonthStr = `${tY}-${tM}`;
+    const dateParts = t.date.split('-');
+    const tY = dateParts[0];
+    const tMonthStr = `${tY}-${dateParts[1]}`;
 
     lProfit += profit;
     lLoss += loss;
@@ -512,15 +565,15 @@ function updatePeriodOptions() {
   startSelect.innerHTML = '';
   endSelect.innerHTML = '';
 
-  const datasetYears = [...new Set(trades.map(t => t.date.split('-')[0]))];
+  const datasetYears = [...new Set(trades.filter(t=>t&&t.date).map(t => t.date.split('-')[0]))];
   if (!datasetYears.includes(currentYearStr)) datasetYears.push(currentYearStr);
   const years = datasetYears.sort();
 
-  const datasetMonths = [...new Set(trades.map(t => t.date.slice(0, 7)))];
+  const datasetMonths = [...new Set(trades.filter(t=>t&&t.date).map(t => t.date.slice(0, 7)))];
   if (!datasetMonths.includes(currentMonthStr)) datasetMonths.push(currentMonthStr);
   const months = datasetMonths.sort();
 
-  const datasetDays = [...new Set(trades.map(t => t.date))];
+  const datasetDays = [...new Set(trades.filter(t=>t&&t.date).map(t => t.date))];
   if (!datasetDays.includes(todayStr)) datasetDays.push(todayStr);
   const days = datasetDays.sort();
 
@@ -577,12 +630,14 @@ function renderAnalyticsDashboard() {
     periodSubtitleText = '生涯 (全期間)';
   } else if (activePeriodType === 'year') {
     filteredTrades = trades.filter(t => {
+      if (!t || !t.date) return false;
       const y = t.date.split('-')[0];
       return y >= startVal && y <= endVal;
     });
     periodSubtitleText = startVal === endVal ? `${startVal}年` : `${startVal}年 〜 ${endVal}年`;
   } else if (activePeriodType === 'month') {
     filteredTrades = trades.filter(t => {
+      if (!t || !t.date) return false;
       const m = t.date.slice(0, 7);
       return m >= startVal && m <= endVal;
     });
@@ -595,7 +650,7 @@ function renderAnalyticsDashboard() {
       periodSubtitleText = `${y1}年${m1}月 〜 ${y2}年${m2}月`;
     }
   } else if (activePeriodType === 'day') {
-    filteredTrades = trades.filter(t => t.date >= startVal && t.date <= endVal);
+    filteredTrades = trades.filter(t => t && t.date >= startVal && t.date <= endVal);
     periodSubtitleText = startVal === endVal ? startVal : `${startVal} 〜 ${endVal}`;
   }
 
@@ -633,7 +688,8 @@ function renderAnalyticsChart(filteredTrades, startVal, endVal) {
     const catMap = {};
     filteredTrades.forEach(t => {
       const { netPnl } = getTradeProfitLoss(t);
-      catMap[t.category] = (catMap[t.category] || 0) + netPnl;
+      const cat = t.category || 'その他';
+      catMap[cat] = (catMap[cat] || 0) + netPnl;
     });
 
     const labels = Object.keys(catMap);
@@ -692,7 +748,7 @@ function renderAnalyticsChart(filteredTrades, startVal, endVal) {
     let labels = [];
 
     if (activePeriodType === 'all') {
-      const years = [...new Set(trades.map(t => t.date.split('-')[0]))].sort();
+      const years = [...new Set(trades.filter(t=>t&&t.date).map(t => t.date.split('-')[0]))].sort();
       years.forEach(y => groupedMap[y] = 0);
 
       filteredTrades.forEach(t => {
@@ -704,7 +760,7 @@ function renderAnalyticsChart(filteredTrades, startVal, endVal) {
       labels = Object.keys(groupedMap).map(y => `${y}年`);
 
     } else if (activePeriodType === 'year') {
-      const monthsInRange = [...new Set(filteredTrades.map(t => t.date.slice(0, 7)))].sort();
+      const monthsInRange = [...new Set(filteredTrades.filter(t=>t&&t.date).map(t => t.date.slice(0, 7)))].sort();
       monthsInRange.forEach(mKey => groupedMap[mKey] = 0);
 
       filteredTrades.forEach(t => {
@@ -721,7 +777,7 @@ function renderAnalyticsChart(filteredTrades, startVal, endVal) {
       });
 
     } else if (activePeriodType === 'month') {
-      const daysInRange = [...new Set(filteredTrades.map(t => t.date))].sort();
+      const daysInRange = [...new Set(filteredTrades.filter(t=>t&&t.date).map(t => t.date))].sort();
       daysInRange.forEach(dKey => groupedMap[dKey] = 0);
 
       filteredTrades.forEach(t => {
@@ -808,7 +864,7 @@ function renderPerformanceTables(filteredTrades) {
     `;
 
     filteredTrades.forEach(t => {
-      const name = t.category;
+      const name = t.category || 'FXデイトレ';
       const { netPnl } = getTradeProfitLoss(t);
       
       groupMap[name] = groupMap[name] || { pnl: 0, wins: 0, losses: 0, total: 0 };
@@ -828,7 +884,7 @@ function renderPerformanceTables(filteredTrades) {
     `;
 
     filteredTrades.forEach(t => {
-      const name = t.item || t.category;
+      const name = t.item || t.category || 'その他';
       const { netPnl } = getTradeProfitLoss(t);
       
       groupMap[name] = groupMap[name] || { pnl: 0, wins: 0, losses: 0, total: 0 };
@@ -870,6 +926,7 @@ function renderPerformanceTables(filteredTrades) {
     const datasetForMonth = (activePeriodType === 'all') ? trades : filteredTrades;
 
     datasetForMonth.forEach(t => {
+      if (!t || !t.date) return;
       const [y, m] = t.date.split('-');
       const mKey = `${y}年${m}月`;
       const { netPnl } = getTradeProfitLoss(t);
@@ -1056,9 +1113,10 @@ function exportDataToCSV() {
 
   let csvContent = '\uFEFF日付,大項目,小項目,利益額,損失額,純損益,メモ\n';
 
-  trades.sort((a,b) => a.date.localeCompare(b.date)).forEach(t => {
+  trades.sort((a,b) => (a.date || '').localeCompare(b.date || '')).forEach(t => {
+    if (!t) return;
     const { profit, loss, netPnl } = getTradeProfitLoss(t);
-    const date = t.date;
+    const date = t.date || '';
     const category = `"${(t.category || '').replace(/"/g, '""')}"`;
     const item = `"${(t.item || '').replace(/"/g, '""')}"`;
     const memo = `"${(t.memo || '').replace(/"/g, '""')}"`;
@@ -1277,8 +1335,10 @@ function setupEventListeners() {
 
   addEvt('menuResetDataBtn', 'click', () => {
     if (confirm('過去データを再読み込みしますか？現在の入力内容はリセットされます。')) {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(CATEGORIES_KEY);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(CATEGORIES_KEY);
+      } catch(e){}
       loadCategories();
       loadTrades();
       closeMenu();
@@ -1357,8 +1417,11 @@ function setupEventListeners() {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      const date = document.getElementById('tradeDateInput').value;
-      let category = document.getElementById('tradeCategorySelect').value;
+      const dateEl = document.getElementById('tradeDateInput');
+      const date = dateEl ? dateEl.value : todayStr;
+      
+      const catEl = document.getElementById('tradeCategorySelect');
+      let category = catEl ? catEl.value : 'FXデイトレ';
       
       if (category === '__NEW__') {
         category = customCatInput ? customCatInput.value.trim() : '';
