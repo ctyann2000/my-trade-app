@@ -519,10 +519,30 @@
       gap: 10px;
     }
 
+    /* Separate Backdrop Backdrop & Drawer Component with guaranteed pointer-events */
+    .menu-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 240;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    
+    .menu-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     .menu-drawer {
       position: fixed;
       top: 0;
-      right: -280px;
+      right: -300px;
       width: 280px;
       height: 100%;
       background-color: var(--bg-card);
@@ -532,10 +552,12 @@
       display: flex;
       flex-direction: column;
       padding: 16px;
+      pointer-events: auto !important;
+      box-shadow: -5px 0 25px rgba(0,0,0,0.5);
     }
 
     .menu-drawer.active {
-      right: 0;
+      right: 0 !important;
     }
 
     .menu-header {
@@ -564,10 +586,14 @@
       align-items: center;
       gap: 10px;
       transition: background 0.15s;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      user-select: none;
     }
 
     .menu-item:hover, .menu-item:active {
       background-color: var(--bg-card-hover);
+      border-color: var(--color-accent);
     }
 
     .summary-controls {
@@ -747,24 +773,25 @@
 
   </div>
 
-  <!-- Right Drawer Menu -->
-  <div class="modal-overlay" id="menuDrawerOverlay" onclick="window.closeDrawerMenu()">
-    <div class="menu-drawer" id="menuDrawer" onclick="event.stopPropagation()">
-      <div class="menu-header">
-        <div class="app-title"><span>繝｡繝九Η繝ｼ</span></div>
-        <button class="icon-btn" onclick="window.closeDrawerMenu()">笨・/button>
-      </div>
-      <ul class="menu-list">
-        <li class="menu-item" onclick="window.handleMenuAction('summary')">投 繧ｵ繝槭Μ繝ｼ繝ｻ隧ｳ邏ｰ蛻・梵</li>
-        <li class="menu-item" onclick="window.handleMenuAction('excel_import')" style="color:#10b981; font-weight:bold;">踏 Excel (xlsx) 縺九ｉ蜿悶ｊ霎ｼ縺ｿ</li>
-        <li class="menu-item" onclick="window.handleMenuAction('export_csv')">投 CSV繧ｨ繧ｯ繧ｹ繝昴・繝・(Excel逕ｨ)</li>
-        <li class="menu-item" onclick="window.handleMenuAction('categories')">捷・・螟ｧ鬆・岼縺ｮ邱ｨ髮・・霑ｽ蜉</li>
-        <li class="menu-item" onclick="window.handleMenuAction('export_json')" style="color:var(--color-accent);">逃 JSON繝舌ャ繧ｯ繧｢繝・・蜃ｺ蜉・/li>
-        <li class="menu-item" onclick="window.handleMenuAction('import_json')">唐 JSON繝輔ぃ繧､繝ｫ縺九ｉ蠕ｩ蜈・/li>
-        <li class="menu-item" onclick="window.handleMenuAction('autosync')" style="color:#3b82f6;">笘・ｸ・Google Drive 蜈ｨ閾ｪ蜍募酔譛溯ｨｭ螳・/li>
-        <li class="menu-item" onclick="window.handleMenuAction('reset_history')" style="color:#ef4444;">売 驕主悉繝・・繧ｿ蜈ｨ莉ｶ繧貞・繝ｭ繝ｼ繝・/li>
-      </ul>
+  <!-- Independent Backdrop Overlay -->
+  <div class="menu-backdrop" id="menuDrawerOverlay" onclick="window.closeDrawerMenu()"></div>
+
+  <!-- Right Drawer Menu (Fully Independent Outside Backdrop) -->
+  <div class="menu-drawer" id="menuDrawer">
+    <div class="menu-header">
+      <div class="app-title"><span>繝｡繝九Η繝ｼ</span></div>
+      <button class="icon-btn" onclick="window.closeDrawerMenu()">笨・/button>
     </div>
+    <ul class="menu-list">
+      <li class="menu-item" onclick="window.handleMenuAction('summary')">投 繧ｵ繝槭Μ繝ｼ繝ｻ隧ｳ邏ｰ蛻・梵</li>
+      <li class="menu-item" onclick="window.handleMenuAction('excel_import')" style="color:#10b981; font-weight:bold;">踏 Excel (xlsx) 縺九ｉ蜿悶ｊ霎ｼ縺ｿ</li>
+      <li class="menu-item" onclick="window.handleMenuAction('export_csv')">投 CSV繧ｨ繧ｯ繧ｹ繝昴・繝・(Excel逕ｨ)</li>
+      <li class="menu-item" onclick="window.handleMenuAction('categories')">捷・・螟ｧ鬆・岼縺ｮ邱ｨ髮・・霑ｽ蜉</li>
+      <li class="menu-item" onclick="window.handleMenuAction('export_json')" style="color:var(--color-accent);">逃 JSON繝舌ャ繧ｯ繧｢繝・・蜃ｺ蜉・/li>
+      <li class="menu-item" onclick="window.handleMenuAction('import_json')">唐 JSON繝輔ぃ繧､繝ｫ縺九ｉ蠕ｩ蜈・/li>
+      <li class="menu-item" onclick="window.handleMenuAction('autosync')" style="color:#3b82f6;">笘・ｸ・Google Drive 蜈ｨ閾ｪ蜍募酔譛溯ｨｭ螳・/li>
+      <li class="menu-item" onclick="window.handleMenuAction('reset_history')" style="color:#ef4444;">売 驕主悉繝・・繧ｿ蜈ｨ莉ｶ繧貞・繝ｭ繝ｼ繝・/li>
+    </ul>
   </div>
 
   <!-- Excel Import Modal -->
@@ -1002,13 +1029,17 @@
       var activeChartType = 'doughnut';
 
       window.openDrawerMenu = function() {
-        document.getElementById('menuDrawerOverlay').classList.add('active');
-        document.getElementById('menuDrawer').classList.add('active');
+        var bd = document.getElementById('menuDrawerOverlay');
+        var dr = document.getElementById('menuDrawer');
+        if (bd) bd.classList.add('active');
+        if (dr) dr.classList.add('active');
       };
 
       window.closeDrawerMenu = function() {
-        document.getElementById('menuDrawerOverlay').classList.remove('active');
-        document.getElementById('menuDrawer').classList.remove('active');
+        var bd = document.getElementById('menuDrawerOverlay');
+        var dr = document.getElementById('menuDrawer');
+        if (bd) bd.classList.remove('active');
+        if (dr) dr.classList.remove('active');
       };
 
       window.handleMenuAction = function(action) {
