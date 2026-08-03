@@ -1,20 +1,15 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Trade Analytics Pro</title>
   
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Chart.js DataLabels Plugin CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <!-- SheetJS CDN (Excel .xlsx 隗｣譫舌Λ繧､繝悶Λ繝ｪ) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
-    /* Trade Analytics Pro - Deep Dark Premium Theme */
     :root {
       --bg-primary: #0b0f17;
       --bg-secondary: #131924;
@@ -430,7 +425,6 @@
     .summary-pnl.win { color: var(--color-win); }
     .summary-pnl.loss { color: var(--color-loss); }
 
-    /* Modal Overlay */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -502,7 +496,6 @@
       gap: 10px;
     }
 
-    /* Menu Backdrop & Drawer */
     .menu-backdrop {
       position: fixed;
       top: 0;
@@ -669,39 +662,39 @@
     
     <header class="app-header">
       <div class="app-title">
-        <span>Trade</span>Analytics <span style="background:#10b981; color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:bold;">v3.1 JAPANESE FIXED</span>
+        <span>Trade</span>Analytics <span style="background:#10b981; color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:bold;">v6.0 FINAL</span>
       </div>
-      <div id="gdriveSyncBadge" class="sync-badge" title="Google Drive 蜷梧悄繧ｹ繝・・繧ｿ繧ｹ">
+      <div id="gdriveSyncBadge" class="sync-badge" title="Google Drive &#x540C;&#x671F;&#x30B9;&#x30C6;&#x30FC;&#x30BF;&#x30B9;">
         <span class="sync-dot"></span>
-        <span id="syncStatusText">繝ｭ繝ｼ繧ｫ繝ｫ</span>
+        <span id="syncStatusText">&#x30ED;&#x30FC;&#x30AB;&#x30EB;</span>
       </div>
-      <button class="icon-btn" id="openMenuBtn" onclick="document.getElementById('menuDrawerOverlay').style.display='block'; document.getElementById('menuDrawer').style.right='0px';" aria-label="繝｡繝九Η繝ｼ">
+      <button class="icon-btn" id="openMenuBtn" onclick="document.getElementById('menuDrawerOverlay').style.display='block'; document.getElementById('menuDrawer').style.right='0px';" aria-label="&#x30E1;&#x30CB;&#x30E5;&#x30FC;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
     </header>
 
     <section class="calendar-section">
       <div class="calendar-header">
-        <div class="current-month" id="calendarMonthLabel">2026蟷ｴ 8譛・/div>
+        <div class="current-month" id="calendarMonthLabel">2026&#x5E74; 8&#x6708;</div>
         <div class="calendar-nav">
-          <button class="icon-btn" id="prevMonthBtn" title="蜑肴怦">
+          <button class="icon-btn" id="prevMonthBtn" title="&#x540D;&#x6708;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
-          <button class="icon-btn" id="todayBtn" title="莉頑怦" style="font-size:0.75rem; font-weight:bold;">莉頑律</button>
-          <button class="icon-btn" id="nextMonthBtn" title="谺｡譛・>
+          <button class="icon-btn" id="todayBtn" title="&#x4ECA;&#x65E5;" style="font-size:0.75rem; font-weight:bold;">&#x4ECA;&#x65E5;</button>
+          <button class="icon-btn" id="nextMonthBtn" title="&#x6B21;&#x6708;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
       </div>
 
       <div class="weekdays-grid">
-        <div class="weekday sun">譌･</div>
-        <div class="weekday">譛・/div>
-        <div class="weekday">轣ｫ</div>
-        <div class="weekday">豌ｴ</div>
-        <div class="weekday">譛ｨ</div>
-        <div class="weekday">驥・/div>
-        <div class="weekday sat">蝨・/div>
+        <div class="weekday sun">&#x65E5;</div>
+        <div class="weekday">&#x6708;</div>
+        <div class="weekday">&#x706B;</div>
+        <div class="weekday">&#x6C34;</div>
+        <div class="weekday">&#x6728;</div>
+        <div class="weekday">&#x91D1;</div>
+        <div class="weekday sat">&#x571F;</div>
       </div>
 
       <div class="days-grid" id="daysGrid"></div>
@@ -709,9 +702,9 @@
 
     <section class="details-section">
       <div class="section-title-bar">
-        <div class="selected-date-title" id="selectedDateTitle">2026/08/03 (譛・ 縺ｮ謳咲寢譏守ｴｰ</div>
+        <div class="selected-date-title" id="selectedDateTitle">2026/08/03 (&#x6708;) &#x306E;&#x640D;&#x76CA;&#x660E;&#x7D30;</div>
         <div class="day-summary-pills">
-          <div class="pill win" id="dayPnlPill">+ﾂ･0</div>
+          <div class="pill win" id="dayPnlPill">+&#xA5;0</div>
         </div>
       </div>
 
@@ -719,28 +712,28 @@
 
       <button class="add-trade-btn" id="openAddTradeBtn" onclick="document.getElementById('addTradeModalOverlay').style.display='flex';">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        繝医Ξ繝ｼ繝臥ｵ先棡繧定ｿｽ蜉
+        &#x30C8;&#x30EC;&#x30FC;&#x30C9;&#x7D50;&#x679C;&#x3092;&#x8FFD;&#x52A0;
       </button>
     </section>
 
     <footer class="fixed-summary-footer">
       <div class="summary-col">
-        <div class="summary-col-title">譛磯俣</div>
-        <div class="summary-row"><span>蛻ｩ逶・/span><span id="footerMonthProfit" style="color:var(--color-win);">ﾂ･0</span></div>
-        <div class="summary-row"><span>謳榊､ｱ</span><span id="footerMonthLoss" style="color:var(--color-loss);">ﾂ･0</span></div>
-        <div class="summary-pnl win" id="footerMonthPnl">ﾂ･0</div>
+        <div class="summary-col-title">&#x6708;&#x9593;</div>
+        <div class="summary-row"><span>&#x5229;&#x76CA;</span><span id="footerMonthProfit" style="color:var(--color-win);">&#xA5;0</span></div>
+        <div class="summary-row"><span>&#x640D;&#x5931;</span><span id="footerMonthLoss" style="color:var(--color-loss);">&#xA5;0</span></div>
+        <div class="summary-pnl win" id="footerMonthPnl">&#xA5;0</div>
       </div>
       <div class="summary-col">
-        <div class="summary-col-title">蟷ｴ髢・(2026)</div>
-        <div class="summary-row"><span>蛻ｩ逶・/span><span id="footerYearProfit" style="color:var(--color-win);">ﾂ･0</span></div>
-        <div class="summary-row"><span>謳榊､ｱ</span><span id="footerYearLoss" style="color:var(--color-loss);">ﾂ･0</span></div>
-        <div class="summary-pnl win" id="footerYearPnl">ﾂ･0</div>
+        <div class="summary-col-title">&#x5E74;&#x9593; (2026)</div>
+        <div class="summary-row"><span>&#x5229;&#x76CA;</span><span id="footerYearProfit" style="color:var(--color-win);">&#xA5;0</span></div>
+        <div class="summary-row"><span>&#x640D;&#x5931;</span><span id="footerYearLoss" style="color:var(--color-loss);">&#xA5;0</span></div>
+        <div class="summary-pnl win" id="footerYearPnl">&#xA5;0</div>
       </div>
       <div class="summary-col">
-        <div class="summary-col-title">逕滓ｶｯ (蜈ｨ譛滄俣)</div>
-        <div class="summary-row"><span>蛻ｩ逶・/span><span id="footerLifeProfit" style="color:var(--color-win);">ﾂ･0</span></div>
-        <div class="summary-row"><span>謳榊､ｱ</span><span id="footerLifeLoss" style="color:var(--color-loss);">ﾂ･0</span></div>
-        <div class="summary-pnl win" id="footerLifePnl">ﾂ･0</div>
+        <div class="summary-col-title">&#x751F;&#x6DAF; (&#x5168;&#x671F;&#x9593;)</div>
+        <div class="summary-row"><span>&#x5229;&#x76CA;</span><span id="footerLifeProfit" style="color:var(--color-win);">&#xA5;0</span></div>
+        <div class="summary-row"><span>&#x640D;&#x5931;</span><span id="footerLifeLoss" style="color:var(--color-loss);">&#xA5;0</span></div>
+        <div class="summary-pnl win" id="footerLifePnl">&#xA5;0</div>
       </div>
     </footer>
 
@@ -750,14 +743,14 @@
 
   <div class="menu-drawer" id="menuDrawer">
     <div class="menu-header">
-      <div class="app-title"><span>繝｡繝九Η繝ｼ</span></div>
-      <button class="icon-btn" onclick="document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">笨・/button>
+      <div class="app-title"><span>&#x30E1;&#x30CB;&#x30E5;&#x30FC;</span></div>
+      <button class="icon-btn" onclick="document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">&#x2715;</button>
     </div>
     <div class="menu-list">
-      <button type="button" class="menu-item-btn" onclick="document.getElementById('summaryModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">投 繧ｵ繝槭Μ繝ｼ繝ｻ隧ｳ邏ｰ蛻・梵</button>
-      <button type="button" class="menu-item-btn" onclick="document.getElementById('excelImportModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';" style="color:#10b981; font-weight:bold;">踏 Excel (xlsx) 縺九ｉ蜿悶ｊ霎ｼ縺ｿ</button>
-      <button type="button" class="menu-item-btn" onclick="document.getElementById('categoryManageModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">捷・・螟ｧ鬆・岼縺ｮ邱ｨ髮・・霑ｽ蜉</button>
-      <button type="button" class="menu-item-btn" onclick="if(confirm('驕主悉繝・・繧ｿ蜈ｨ莉ｶ・・65莉ｶ・峨ｒ蜀阪Ο繝ｼ繝峨＠縺ｦ蠕ｩ蜈・＠縺ｾ縺吶°・・)){ window.reloadHistoricalData(); document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px'; }" style="color:#ef4444;">売 驕主悉繝・・繧ｿ蜈ｨ莉ｶ繧貞・繝ｭ繝ｼ繝・/button>
+      <button type="button" class="menu-item-btn" onclick="document.getElementById('summaryModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">&#x1F4CA; &#x30B5;&#x30DE;&#x30EA;&#x30FC;&#x30FB;&#x8A73;&#x7D30;&#x5206;&#x6790;</button>
+      <button type="button" class="menu-item-btn" onclick="document.getElementById('excelImportModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';" style="color:#10b981; font-weight:bold;">&#x1F4E5; Excel (xlsx) &#x304B;&#x3089;&#x53D6;&#x308A;&#x8FBC;&#x307F;</button>
+      <button type="button" class="menu-item-btn" onclick="document.getElementById('categoryManageModalOverlay').style.display='flex'; document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px';">&#x1F3F7;&#xFE0F; &#x5927;&#x9805;&#x76EE;&#x306E;&#x7DE8;&#x96C6;&#x30FB;&#x8FFD;&#x52A0;</button>
+      <button type="button" class="menu-item-btn" onclick="if(confirm('&#x904E;&#x53BB;&#x30C7;&#x30FC;&#x30BF;&#x5168;&#x4EF6;&#xFF08;965&#x4EF6;&#xFF09;&#x3092;&#x5811;&#x30ED;&#x30FC;&#x30C9;&#x3057;&#x3066;&#x5FA9;&#x5143;&#x3057;&#x307E;&#x3059;&#x304B;&#xFF1F;')){ window.reloadHistoricalData(); document.getElementById('menuDrawerOverlay').style.display='none'; document.getElementById('menuDrawer').style.right='-320px'; }" style="color:#ef4444;">&#x1F504; &#x904E;&#x53BB;&#x30C7;&#x30FC;&#x30BF;&#x5168;&#x4EF6;&#x3092;&#x5811;&#x30ED;&#x30FC;&#x30C9;</button>
     </div>
   </div>
 
@@ -765,43 +758,45 @@
   <div class="modal-overlay" id="excelImportModalOverlay">
     <div class="modal-content" style="max-width:550px;">
       <div class="modal-header">
-        <div class="modal-title">踏 Excel (xlsx) 蜿悶ｊ霎ｼ縺ｿ繧ｬ繧､繝・/div>
-        <button class="icon-btn" onclick="document.getElementById('excelImportModalOverlay').style.display='none';">笨・/button>
+        <div class="modal-title">&#x1F4E5; Excel (xlsx) &#x53D6;&#x308A;&#x8FBC;&#x307F;&#x30AC;&#x30A4;&#x30C9;</div>
+        <button class="icon-btn" onclick="document.getElementById('excelImportModalOverlay').style.display='none';">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
-          Excel繝輔ぃ繧､繝ｫ・・xlsx / .xls・峨・繝医Ξ繝ｼ繝芽ｨ倬鹸繧剃ｸ諡ｬ繧､繝ｳ繝昴・繝医＠縺ｾ縺吶・        </div>
+          Excel&#x30D5;&#x30A1;&#x30A4;&#x30EB;&#xFF08;.xlsx / .xls&#xFF09;&#x306E;&#x30C8;&#x30EC;&#x30FC;&#x30C9;&#x8A18;&#x9332;&#x3092;&#x4E00;&#x62EC;&#x30A4;&#x30F3;&#x30DD;&#x30FC;&#x30C8;&#x3057;&#x307E;&#x3059;&#x3002;
+        </div>
 
         <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:14px;">
           <div style="background:rgba(255,255,255,0.05); padding:8px 12px; font-weight:700; font-size:0.85rem; border-bottom:1px solid var(--border-color); color:var(--color-accent);">
-            東 A蛻励°繧峨・Excel蛻鈴・鄂ｮ繝ｫ繝ｼ繝ｫ
+            &#x1F48D; A&#x5217;&#x304B;&#x3089;&#x306E;Excel&#x5217;&#x914D;&#x7F6E;&#x30EB;&#x30FC;&#x30EB;
           </div>
           <table class="data-table" style="font-size:0.8rem;">
             <thead>
               <tr>
-                <th style="width:15%;">蛻・/th>
-                <th style="width:25%;">鬆・岼蜷・/th>
-                <th>蜈･蜉帛・螳ｹ縺ｨ險倩ｼ我ｾ・/th>
+                <th style="width:15%;">&#x5217;</th>
+                <th style="width:25%;">&#x9805;&#x76EE;&#x540D;</th>
+                <th>&#x5165;&#x529B;&#x578B;&#x3068;&#x8A18;&#x8F09;&#x4F8B;</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td style="font-weight:700; color:#3b82f6;">A蛻・/td><td>譌･莉・/td><td>2026/08/03 繧・2026-08-03</td></tr>
-              <tr><td style="font-weight:700; color:#3b82f6;">B蛻・/td><td>螟ｧ鬆・岼</td><td>FX繝・う繝医Ξ, 閾ｪ蜍募｣ｲ雋ｷ 遲・/td></tr>
-              <tr><td style="font-weight:700; color:#3b82f6;">C蛻・/td><td>蟆城・岼</td><td>USD/JPY, 繧ｴ繝ｼ繝ｫ繝荏 遲・/td></tr>
-              <tr><td style="font-weight:700; color:#3b82f6;">D蛻・/td><td>蛻ｩ逶企｡・/td><td>5000 (蛻ｩ逶企｡・</td></tr>
-              <tr><td style="font-weight:700; color:#3b82f6;">E蛻・/td><td>謳榊､ｱ鬘・/td><td>1200 (謳榊､ｱ鬘・</td></tr>
-              <tr><td style="font-weight:700; color:#3b82f6;">F蛻・/td><td>繝｡繝｢</td><td>謚ｼ縺礼岼雋ｷ縺Я 遲・/td></tr>
+              <tr><td style="font-weight:700; color:#3b82f6;">A&#x5217;</td><td>&#x65E5;&#x4ED8;</td><td>2026/08/03 &#x3084; 2026-08-03</td></tr>
+              <tr><td style="font-weight:700; color:#3b82f6;">B&#x5217;</td><td>&#x5927;&#x9805;&#x76EE;</td><td>FX&#x30C6;&#x3093;&#x3068;&#x30EC;, &#x81EA;&#x52D5;&#x58F2;&#x8CB7; &#x7B49;</td></tr>
+              <tr><td style="font-weight:700; color:#3b82f6;">C&#x5217;</td><td>&#x5C0F;&#x9805;&#x76EE;</td><td>USD/JPY, &#x30B4;&#x30FC;&#x30EB;&#x30C9; &#x7B49;</td></tr>
+              <tr><td style="font-weight:700; color:#3b82f6;">D&#x5217;</td><td>&#x5229;&#x76CA;&#x984D;</td><td>5000 (&#x5229;&#x76CA;)</td></tr>
+              <tr><td style="font-weight:700; color:#3b82f6;">E&#x5217;</td><td>&#x640D;&#x5931;&#x984D;</td><td>1200 (&#x640D;&#x5931;)</td></tr>
+              <tr><td style="font-weight:700; color:#3b82f6;">F&#x5217;</td><td>&#x30E1;&#x30E2;</td><td>&#x62C5;&#x3057;&#x76EE;&#x8CB7;&#x3044; &#x7B49;</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="form-group">
-          <label class="form-label" style="font-weight:700;">Excel繝輔ぃ繧､繝ｫ・・xlsx / .xls・峨ｒ驕ｸ謚・/label>
+          <label class="form-label" style="font-weight:700;">Excel&#x30D5;&#x30A1;&#x30A4;&#x30EB;&#xFF08;.xlsx / .xls&#xFF09;&#x3092;&#x9078;&#x629E;</label>
           <input type="file" class="form-input" id="excelFileInput" accept=".xlsx, .xls" style="padding:8px;">
         </div>
 
         <button id="startExcelImportBtn" class="add-trade-btn" style="margin-top:10px; background:#10b981;">
-          Excel繝輔ぃ繧､繝ｫ縺九ｉ繝・・繧ｿ繧偵う繝ｳ繝昴・繝・        </button>
+          Excel&#x30D5;&#x30A1;&#x30A4;&#x30EB;&#x304B;&#x3089;&#x30C7;&#x30FC;&#x30BF;&#x3092;&#x30A4;&#x30F3;&#x30DD;&#x30FC;&#x30C8;
+        </button>
 
       </div>
     </div>
@@ -811,19 +806,19 @@
   <div class="modal-overlay" id="categoryManageModalOverlay">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">捷・・螟ｧ鬆・岼縺ｮ邂｡逅・・霑ｽ蜉</div>
-        <button class="icon-btn" onclick="document.getElementById('categoryManageModalOverlay').style.display='none';">笨・/button>
+        <div class="modal-title">&#x1F3F7;&#xFE0F; &#x5927;&#x9805;&#x76EE;&#x306E;&#x7DE8;&#x96C6;&#x30FB;&#x8FFD;&#x52A0;</div>
+        <button class="icon-btn" onclick="document.getElementById('categoryManageModalOverlay').style.display='none';">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">譁ｰ縺励＞螟ｧ鬆・岼繧定ｿｽ蜉</label>
+          <label class="form-label">&#x65B0;&#x3057;&#x3044;&#x5927;&#x9805;&#x76EE;&#x3092;&#x8FFD;&#x52A0;</label>
           <div style="display:flex; gap:8px;">
-            <input type="text" class="form-input" id="newCategoryNameInput" placeholder="萓・ 證怜捷雉・肇">
-            <button class="add-trade-btn" id="addCategoryBtn" style="width:auto; padding:0 16px;">霑ｽ蜉</button>
+            <input type="text" class="form-input" id="newCategoryNameInput" placeholder="&#x4F8B;: &#x9697;&#x53F7;&#x8CC7;&#x7523;">
+            <button class="add-trade-btn" id="addCategoryBtn" style="width:auto; padding:0 16px;">&#x8FFD;&#x52A0;</button>
           </div>
         </div>
         <div style="margin-top:16px;">
-          <label class="form-label">逋ｻ骭ｲ貂医∩縺ｮ螟ｧ鬆・岼荳隕ｧ</label>
+          <label class="form-label">&#x767B;&#x9332;&#x6E08;&#x307F;&#x306E;&#x5927;&#x9805;&#x76EE;&#x4E00;&#x89A7;</label>
           <div id="categoryManageList" style="display:flex; flex-direction:column; gap:8px;"></div>
         </div>
       </div>
@@ -834,29 +829,29 @@
   <div class="modal-overlay" id="summaryModalOverlay">
     <div class="modal-content" style="height:92vh;">
       <div class="modal-header">
-        <div class="modal-title">投 繧ｵ繝槭Μ繝ｼ繝ｻ蛻・梵繝ｬ繝昴・繝・/div>
-        <button class="icon-btn" onclick="document.getElementById('summaryModalOverlay').style.display='none';">笨・/button>
+        <div class="modal-title">&#x1F4CA; &#x30B5;&#x30DE;&#x30EA;&#x30FC;&#x30FB;&#x8A73;&#x7D30;&#x5206;&#x6790;</div>
+        <button class="icon-btn" onclick="document.getElementById('summaryModalOverlay').style.display='none';">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div class="summary-controls">
           <div class="tab-group" id="periodTypeTabs">
-            <button class="tab-btn" data-period="all">逕滓ｶｯ</button>
-            <button class="tab-btn" data-period="year">蟷ｴ蛻･</button>
-            <button class="tab-btn active" data-period="month">譛亥挨</button>
-            <button class="tab-btn" data-period="day">譌･蛻･</button>
+            <button class="tab-btn" data-period="all">&#x751F;&#x6DAF;</button>
+            <button class="tab-btn" data-period="year">&#x5E74;&#x5225;</button>
+            <button class="tab-btn active" data-period="month">&#x6708;&#x5225;</button>
+            <button class="tab-btn" data-period="day">&#x65E5;&#x5225;</button>
           </div>
 
           <div class="filter-row" id="periodSelectContainer" style="display:flex; align-items:center; gap:8px;">
             <select class="form-select" id="periodSelectStart" style="flex:1;"></select>
-            <span style="color:var(--text-muted); font-weight:bold;">縲・/span>
+            <span style="color:var(--text-muted); font-weight:bold;">&#x301C;</span>
             <select class="form-select" id="periodSelectEnd" style="flex:1;"></select>
           </div>
         </div>
 
         <div class="chart-container-box" id="chartBox">
           <div class="chart-title">
-            <span id="chartTitleLabel">螟ｧ鬆・岼繝ｻ蟆城・岼蛻･縺ｮ蜿取髪讒区・</span>
-            <span id="chartTotalLabel" style="color:var(--color-win); font-weight:800;">+ﾂ･0</span>
+            <span id="chartTitleLabel">&#x5927;&#x9805;&#x76EE;&#x30FB;&#x5C0F;&#x9805;&#x76EE;&#x5225;&#x306E;&#x640D;&#x76CA;&#x69CB;&#x6210;</span>
+            <span id="chartTotalLabel" style="color:var(--color-win); font-weight:800;">+&#xA5;0</span>
           </div>
           <div class="canvas-wrapper">
             <canvas id="analyticsChart"></canvas>
@@ -867,10 +862,10 @@
           <table class="data-table">
             <thead>
               <tr id="performanceTableHeaderRow">
-                <th>螟ｧ鬆・岼蜷・/th>
-                <th>蜿取髪</th>
-                <th>蝗樊焚 (蜍・雋)</th>
-                <th>蜍晉紫</th>
+                <th>&#x5927;&#x9805;&#x76EE;&#x540D;</th>
+                <th>&#x640D;&#x76CA;</th>
+                <th>&#x56DE;&#x6570; (&#x52DD;-&#x821F;)</th>
+                <th>&#x52DD;&#x7387;</th>
               </tr>
             </thead>
             <tbody id="performanceTableBody"></tbody>
@@ -884,47 +879,47 @@
   <div class="modal-overlay" id="addTradeModalOverlay">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title" id="tradeModalTitle">繝医Ξ繝ｼ繝臥ｵ先棡縺ｮ霑ｽ蜉</div>
-        <button class="icon-btn" onclick="document.getElementById('addTradeModalOverlay').style.display='none';">笨・/button>
+        <div class="modal-title" id="tradeModalTitle">&#x30C8;&#x30EC;&#x30FC;&#x30C9;&#x7D50;&#x679C;&#x306E;&#x8FFD;&#x52A0;</div>
+        <button class="icon-btn" onclick="document.getElementById('addTradeModalOverlay').style.display='none';">&#x2715;</button>
       </div>
       <div class="modal-body">
         <form id="tradeForm">
           <div class="form-group">
-            <label class="form-label">譌･莉・/label>
+            <label class="form-label">&#x65E5;&#x4ED8;</label>
             <input type="date" class="form-input" id="tradeDateInput" required>
           </div>
 
           <div class="form-group">
-            <label class="form-label">螟ｧ鬆・岼 (蛻・｡槭・謇区ｳ・</label>
+            <label class="form-label">&#x5927;&#x9805;&#x76EE; (&#x5206;&#x985E;&#x30FB;&#x624B;&#x6CD5;)</label>
             <select class="form-select" id="tradeCategorySelect"></select>
-            <input type="text" class="form-input" id="customCategoryInput" placeholder="譁ｰ縺励＞螟ｧ鬆・岼繧貞・蜉・ style="display:none; margin-top:6px;">
+            <input type="text" class="form-input" id="customCategoryInput" placeholder="&#x65B0;&#x3057;&#x3044;&#x5927;&#x9805;&#x76EE;&#x3092;&#x5165;&#x529B;" style="display:none; margin-top:6px;">
           </div>
 
           <div class="form-group">
-            <label class="form-label">蟆城・岼 (驫俶氛 / 騾夊ｲｨ繝壹い)</label>
-            <input type="text" class="form-input" id="tradeItemInput" placeholder="萓・ USD/JPY, 驥・(XAUUSD) 窶ｻ譛ｪ蜈･蜉帛庄" list="suggestedItemsList">
+            <label class="form-label">&#x5C0F;&#x9805;&#x76EE; (&#x929F;&#x67C4; / &#x901A;&#x8CA7;&#x30DA;&#x30A2;)</label>
+            <input type="text" class="form-input" id="tradeItemInput" placeholder="&#x4F8B;: USD/JPY, &#x91D1; (XAUUSD) &#x203B;&#x672A;&#x5165;&#x529B;&#x53EF;" list="suggestedItemsList">
             <datalist id="suggestedItemsList"></datalist>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" style="color:var(--color-win);">蛻ｩ逶企｡・(・･)</label>
+              <label class="form-label" style="color:var(--color-win);">&#x5229;&#x76CA;&#x984D; (&#xFFE5;)</label>
               <input type="number" class="form-input" id="tradeProfitInput" placeholder="0" min="0">
             </div>
             <div class="form-group">
-              <label class="form-label" style="color:var(--color-loss);">謳榊､ｱ鬘・(・･)</label>
+              <label class="form-label" style="color:var(--color-loss);">&#x640D;&#x5931;&#x984D; (&#xFFE5;)</label>
               <input type="number" class="form-input" id="tradeLossInput" placeholder="0" min="0">
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">繝｡繝｢ (譬ｹ諡繝ｻ蜿咲怐轤ｹ縺ｪ縺ｩ)</label>
-            <input type="text" class="form-input" id="tradeMemoInput" placeholder="謚ｼ縺礼岼雋ｷ縺・ 繝ｭ繝ｳ繝峨Φ繝悶Ξ繧､繧ｯ縺ｪ縺ｩ" list="suggestedMemosList">
+            <label class="form-label">&#x30E1;&#x30E2; (&#x6839;&#x72E0;&#x30FB;&#x5F97;&#x5931;&#x70B9;&#x306A;&#x3069;)</label>
+            <input type="text" class="form-input" id="tradeMemoInput" placeholder="&#x62C5;&#x3057;&#x76EE;&#x8CB7;&#x3044;, &#x30ED;&#x30F3;&#x30C9;&#x30F3;&#x30D6;&#x30EC;&#x30A4;&#x30AF;&#x306A;&#x3069;" list="suggestedMemosList">
             <datalist id="suggestedMemosList"></datalist>
           </div>
 
           <button type="submit" class="add-trade-btn" style="margin-top:10px;">
-            菫晏ｭ倥☆繧・(閾ｪ蜍募酔譛・
+            &#x4FDD;&#x5B58;&#x3059;&#x308B; (&#x81EA;&#x52D5;&#x540C;&#x671F;)
           </button>
         </form>
       </div>
@@ -941,7 +936,7 @@
       var STORAGE_KEY = 'trade_analytics_data_v2';
       var CATEGORIES_KEY = 'trade_analytics_categories_v2';
 
-      var DEFAULT_CATEGORIES = ['FX繝・う繝医Ξ', 'FX繧ｹ繧ｭ繝｣繝ｫ', 'FX繧ｹ繧､繝ｳ繧ｰ', 'CFD', '譬ｪ謖・焚', '蝠・刀', '閾ｪ蜍募｣ｲ雋ｷ'];
+      var DEFAULT_CATEGORIES = ['FX\u30C6\u3093\u3068\u30EC', 'FX\u30B9\u30AD\u30E3\u30EB', 'FX\u30B9\u30A4\u30F3\u30B0', 'CFD', '\u682A\u6307\u6570', '\u5546\u54C1', '\u81EA\u52D5\u58F2\u8CB7'];
       var COLOR_PALETTE = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f59e0b', '#10b981', '#ec4899', '#f97316', '#6366f1', '#14b8a6', '#a855f7'];
 
       var todayObj = new Date();
@@ -960,7 +955,7 @@
         trades = window.EMBEDDED_HISTORICAL_TRADES ? window.EMBEDDED_HISTORICAL_TRADES.slice() : [];
         saveTrades();
         renderApp();
-        alert('驕主悉繝・・繧ｿ蜈ｨ965莉ｶ縺ｮ繝ｭ繝ｼ繝峨′螳御ｺ・＠縺ｾ縺励◆・・);
+        alert('\u904E\u53BB\u30C7\u30FC\u30BF\u5168965\u4EF6\u306E\u30ED\u30FC\u30C9\u304C\u5B8C\u4E86\u3057\u307E\u3059\u304B\uFF1F');
       };
 
       function getCategoryColor(catName) {
@@ -979,7 +974,7 @@
 
       function formatJPY(amount) {
         if (isNaN(amount)) amount = 0;
-        var sign = amount > 0 ? '+ﾂ･' : amount < 0 ? '-ﾂ･' : 'ﾂ･';
+        var sign = amount > 0 ? '+\u00A5' : amount < 0 ? '-\u00A5' : '\u00A5';
         return sign + Math.abs(amount).toLocaleString();
       }
 
@@ -1038,7 +1033,7 @@
         categories.forEach(function(cat) {
           if (cat) select.appendChild(new Option(cat, cat));
         });
-        select.appendChild(new Option('・・譁ｰ縺励＞螟ｧ鬆・岼繧定ｿｽ蜉...', '__NEW__'));
+        select.appendChild(new Option('\uFF0B \u65B0\u3057\u3044\u5927\u9805\u76EE\u3092\u8FFD\u52A0...', '__NEW__'));
       }
 
       function loadTrades() {
@@ -1077,7 +1072,7 @@
         var month = currentDate.getMonth();
         
         var monthLabel = document.getElementById('calendarMonthLabel');
-        if (monthLabel) monthLabel.textContent = year + '蟷ｴ ' + (month + 1) + '譛・;
+        if (monthLabel) monthLabel.textContent = year + '\u5E74 ' + (month + 1) + '\u6708';
         
         var daysGrid = document.getElementById('daysGrid');
         if (!daysGrid) return;
@@ -1125,7 +1120,7 @@
           }
 
           cell.innerHTML = '<div class="day-number">' + d + '</div>' +
-            (count > 0 ? '<div class="day-badge">塘' + count + '</div>' : '') +
+            (count > 0 ? '<div class="day-badge">\uF4C4' + count + '</div>' : '') +
             (count > 0 ? '<div class="day-amount">' + (netPnl >= 0 ? netPnl.toLocaleString() : netPnl.toLocaleString()) + '</div>' : '');
 
           (function(ds) {
@@ -1157,10 +1152,10 @@
         var parts = selectedDateStr.split('-').map(Number);
         var y = parts[0], m = parts[1], d = parts[2];
         var dateObj = new Date(y, m - 1, d);
-        var dayNames = ['譌･', '譛・, '轣ｫ', '豌ｴ', '譛ｨ', '驥・, '蝨・];
+        var dayNames = ['\u65E5', '\u6708', '\u706B', '\u6C34', '\u6728', '\u91D1', '\u571F'];
         
         var titleEl = document.getElementById('selectedDateTitle');
-        if (titleEl) titleEl.textContent = y + '/' + String(m).padStart(2,'0') + '/' + String(d).padStart(2,'0') + ' (' + dayNames[dateObj.getDay()] + ') 縺ｮ謳咲寢譏守ｴｰ';
+        if (titleEl) titleEl.textContent = y + '/' + String(m).padStart(2,'0') + '/' + String(d).padStart(2,'0') + ' (' + dayNames[dateObj.getDay()] + ') \u306E\u640D\u76CA\u660E\u7D30';
 
         var dayTrades = trades.filter(function(t) { return t && t.date === selectedDateStr; });
         var categoryListEl = document.getElementById('categoryList');
@@ -1170,9 +1165,9 @@
         var dayTotalPnl = 0;
 
         if (dayTrades.length === 0) {
-          categoryListEl.innerHTML = '<div class="empty-state">縺薙・譌･縺ｮ繝医Ξ繝ｼ繝芽ｨ倬鹸縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・br>縲鯉ｼ・繝医Ξ繝ｼ繝臥ｵ先棡繧定ｿｽ蜉縲阪°繧芽ｨ倬鹸繧貞・蜉帙〒縺阪∪縺吶・/div>';
+          categoryListEl.innerHTML = '<div class="empty-state">\u3053\u306E\u65E5\u306E\u30C8\u30EC\u30FC\u30C9\u8A18\u9332\u306F\u3042\u308A\u307E\u305B\u3093\u3002<br>\u300C\uFF0B \u30C8\u30EC\u30FC\u30C9\u7D50\u679C\u3092\u8FFD\u52A0\u300D\u304B\u3089\u8A18\u9332\u3092\u5165\u529B\u3067\u304D\u307E\u3059\u3002</div>';
           var pill = document.getElementById('dayPnlPill');
-          if (pill) { pill.textContent = 'ﾂ･0'; pill.className = 'pill'; }
+          if (pill) { pill.textContent = '\u00A50'; pill.className = 'pill'; }
           return;
         }
 
@@ -1180,7 +1175,7 @@
         dayTrades.forEach(function(t) {
           var res = getTradeProfitLoss(t);
           dayTotalPnl += res.netPnl;
-          var catName = t.category || 'FX繝・う繝医Ξ';
+          var catName = t.category || 'FX\u30C6\u3093\u3068\u30EC';
           catGroups[catName] = catGroups[catName] || { pnl: 0, items: [] };
           catGroups[catName].pnl += res.netPnl;
           catGroups[catName].items.push({ id: t.id, item: t.item, memo: t.memo, profit: res.profit, loss: res.loss, netPnl: res.netPnl });
@@ -1202,18 +1197,18 @@
           group.items.forEach(function(item) {
             var pnlDisplayHtml = '';
             if (item.profit > 0 && item.loss > 0) {
-              pnlDisplayHtml = '<span style="color:var(--color-win);">蛻ｩ逶・ ﾂ･' + item.profit.toLocaleString() + '</span> / <span style="color:var(--color-loss);">謳榊､ｱ: ﾂ･' + item.loss.toLocaleString() + '</span>';
+              pnlDisplayHtml = '<span style="color:var(--color-win);">\u5229\u76CA: \u00A5' + item.profit.toLocaleString() + '</span> / <span style="color:var(--color-loss);">\u640D\u5931: \u00A5' + item.loss.toLocaleString() + '</span>';
             } else if (item.profit > 0) {
-              pnlDisplayHtml = '<span style="color:var(--color-win); font-weight:700;">蛻ｩ逶・ ﾂ･' + item.profit.toLocaleString() + '</span>';
+              pnlDisplayHtml = '<span style="color:var(--color-win); font-weight:700;">\u5229\u76CA: \u00A5' + item.profit.toLocaleString() + '</span>';
             } else if (item.loss > 0) {
-              pnlDisplayHtml = '<span style="color:var(--color-loss); font-weight:700;">謳榊､ｱ: ﾂ･' + item.loss.toLocaleString() + '</span>';
+              pnlDisplayHtml = '<span style="color:var(--color-loss); font-weight:700;">\u640D\u5931: \u00A5' + item.loss.toLocaleString() + '</span>';
             } else {
-              pnlDisplayHtml = '<span style="color:var(--text-muted); font-weight:700;">ﾂ･0</span>';
+              pnlDisplayHtml = '<span style="color:var(--text-muted); font-weight:700;">\u00A50</span>';
             }
 
             itemsHtml += '<div class="trade-item-sub"><div><strong>' + (item.item || catName) + '</strong> <span class="trade-memo">' + (item.memo ? '('+item.memo+')' : '') + '</span></div><div>' +
               pnlDisplayHtml +
-              '<button onclick="window.deleteTradeItem(\'' + item.id + '\')" style="background:none; border:none; color:#ef4444; margin-left:8px; cursor:pointer;">笨・/button></div></div>';
+              '<button onclick="window.deleteTradeItem(\'' + item.id + '\')" style="background:none; border:none; color:#ef4444; margin-left:8px; cursor:pointer;">\u2715</button></div></div>';
           });
 
           card.innerHTML = '<div class="category-header"><div class="category-name-badge"><span class="cat-dot" style="background-color:' + catColor + ';"></span>' + catName + '</div><div class="category-pnl ' + (group.pnl >= 0 ? 'win' : 'loss') + '">' + formatJPY(group.pnl) + '</div></div>' + itemsHtml;
@@ -1222,7 +1217,7 @@
       }
 
       window.deleteTradeItem = function(id) {
-        if (confirm('縺薙・繝医Ξ繝ｼ繝芽ｨ倬鹸繧貞炎髯､縺励∪縺吶°・・)) {
+        if (confirm('\u3053\u306E\u30C8\u30EC\u30FC\u30C9\u8A18\u9332\u3092\u524A\u9664\u3057\u307E\u3059\u304B\uFF1F')) {
           trades = trades.filter(function(t) { return t.id !== id; });
           saveTrades();
           renderApp();
@@ -1252,16 +1247,16 @@
         var mPnl = mProfit - mLoss, yPnl = yProfit - yLoss, lPnl = lProfit - lLoss;
 
         var el;
-        if (el = document.getElementById('footerMonthProfit')) el.textContent = 'ﾂ･' + mProfit.toLocaleString();
-        if (el = document.getElementById('footerMonthLoss')) el.textContent = 'ﾂ･' + mLoss.toLocaleString();
+        if (el = document.getElementById('footerMonthProfit')) el.textContent = '\u00A5' + mProfit.toLocaleString();
+        if (el = document.getElementById('footerMonthLoss')) el.textContent = '\u00A5' + mLoss.toLocaleString();
         if (el = document.getElementById('footerMonthPnl')) { el.textContent = formatJPY(mPnl); el.className = 'summary-pnl ' + (mPnl>=0?'win':'loss'); }
 
-        if (el = document.getElementById('footerYearProfit')) el.textContent = 'ﾂ･' + yProfit.toLocaleString();
-        if (el = document.getElementById('footerYearLoss')) el.textContent = 'ﾂ･' + yLoss.toLocaleString();
+        if (el = document.getElementById('footerYearProfit')) el.textContent = '\u00A5' + yProfit.toLocaleString();
+        if (el = document.getElementById('footerYearLoss')) el.textContent = '\u00A5' + yLoss.toLocaleString();
         if (el = document.getElementById('footerYearPnl')) { el.textContent = formatJPY(yPnl); el.className = 'summary-pnl ' + (yPnl>=0?'win':'loss'); }
 
-        if (el = document.getElementById('footerLifeProfit')) el.textContent = 'ﾂ･' + lProfit.toLocaleString();
-        if (el = document.getElementById('footerLifeLoss')) el.textContent = 'ﾂ･' + lLoss.toLocaleString();
+        if (el = document.getElementById('footerLifeProfit')) el.textContent = '\u00A5' + lProfit.toLocaleString();
+        if (el = document.getElementById('footerLifeLoss')) el.textContent = '\u00A5' + lLoss.toLocaleString();
         if (el = document.getElementById('footerLifePnl')) { el.textContent = formatJPY(lPnl); el.className = 'summary-pnl ' + (lPnl>=0?'win':'loss'); }
       }
 
