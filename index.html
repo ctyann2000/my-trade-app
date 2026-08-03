@@ -662,7 +662,7 @@
     
     <header class="app-header">
       <div class="app-title">
-        <span>Trade</span>Analytics <span style="background:#10b981; color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:bold;">v6.0 FINAL</span>
+        <span>Trade</span>Analytics <span style="background:#10b981; color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:bold;">v7.0 IMPORT FIXED</span>
       </div>
       <div id="gdriveSyncBadge" class="sync-badge" title="Google Drive &#x540C;&#x671F;&#x30B9;&#x30C6;&#x30FC;&#x30BF;&#x30B9;">
         <span class="sync-dot"></span>
@@ -794,7 +794,7 @@
           <input type="file" class="form-input" id="excelFileInput" accept=".xlsx, .xls" style="padding:8px;">
         </div>
 
-        <button id="startExcelImportBtn" class="add-trade-btn" style="margin-top:10px; background:#10b981;">
+        <button type="button" id="startExcelImportBtn" onclick="window.handleExcelImport();" class="add-trade-btn" style="margin-top:10px; background:#10b981;">
           Excel&#x30D5;&#x30A1;&#x30A4;&#x30EB;&#x304B;&#x3089;&#x30C7;&#x30FC;&#x30BF;&#x3092;&#x30A4;&#x30F3;&#x30DD;&#x30FC;&#x30C8;
         </button>
 
@@ -956,6 +956,91 @@
         saveTrades();
         renderApp();
         alert('\u904E\u53BB\u30C7\u30FC\u30BF\u5168965\u4EF6\u306E\u30ED\u30FC\u30C9\u304C\u5B8C\u4E86\u3057\u307E\u3059\u304B\uFF1F');
+      };
+
+      window.handleExcelImport = function() {
+        var fileInput = document.getElementById('excelFileInput');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+          alert('Excel\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+          return;
+        }
+
+        if (typeof XLSX === 'undefined') {
+          alert('Excel\u89E3\u6790\u30E9\u30A4\u30D6\u30E9\u30EA\u304C\u8B80\u307F\u8FBC\u307E\u308C\u3066\u3044\u307E\u305B\u3093\u3002\u30CD\u30C3\u30C8\u謗･邯喀u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002');
+          return;
+        }
+
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            var data = new Uint8Array(e.target.result);
+            var workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
+            var jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            if (!jsonRows || jsonRows.length <= 1) {
+              alert('\u6709\u2605\u306A\u30C8\u30EC\u30FC\u30C9\u30C7\u30FC\u30BF\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3067\u3057\u305F\u3002');
+              return;
+            }
+
+            var importedCount = 0;
+            for (var i = 1; i < jsonRows.length; i++) {
+              var row = jsonRows[i];
+              if (!row || row.length === 0) continue;
+
+              var rawDate = row[0];
+              if (!rawDate) continue;
+
+              var dateStr = '';
+              if (rawDate instanceof Date) {
+                var y = rawDate.getFullYear();
+                var m = String(rawDate.getMonth() + 1).padStart(2, '0');
+                var d = String(rawDate.getDate()).padStart(2, '0');
+                dateStr = y + '-' + m + '-' + d;
+              } else {
+                var str = String(rawDate).trim().replace(/\//g, '-');
+                var parts = str.split('-');
+                if (parts.length === 3) {
+                  dateStr = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                } else {
+                  dateStr = str;
+                }
+              }
+
+              var cat = row[1] ? String(row[1]).trim() : 'FX\u30C6\u3093\u3068\u30EC';
+              var item = row[2] ? String(row[2]).trim() : cat;
+              var profit = Number(row[3]) || 0;
+              var loss = Number(row[4]) || 0;
+              var memo = row[5] ? String(row[5]).trim() : '';
+
+              if (cat && categories.indexOf(cat) === -1) {
+                categories.push(cat);
+              }
+
+              trades.push({
+                id: Date.now().toString() + '_' + i + '_' + Math.random().toString(36).substr(2, 4),
+                date: dateStr,
+                category: cat,
+                item: item,
+                profit: profit,
+                loss: loss,
+                memo: memo
+              });
+              importedCount++;
+            }
+
+            saveCategories();
+            saveTrades();
+            renderApp();
+            document.getElementById('excelImportModalOverlay').style.display = 'none';
+            alert('Excel\u30D5\u30A1\u30A4\u30EB\u304B\u3089 ' + importedCount + ' \u4EF6\u306E\u30C8\u30EC\u30FC\u30C9\u30C7\u30FC\u30BF\u3092\u30A4\u30F3\u30DD;&#x30FC;&#x30C8;\u3057\u307E\u3059\u305F\uFF1F');
+          } catch(err) {
+            alert('Excel\u30D5\u30A1\u30A4\u30EB\u306E\u89E3\u6790\u306B\u5931\u6557\u3057\u307E\u3057\u305F: ' + err.message);
+          }
+        };
+        reader.readAsArrayBuffer(file);
       };
 
       function getCategoryColor(catName) {
